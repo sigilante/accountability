@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;background:#2f3019;}
+  a{color:#fed107;text-decoration:none;border-bottom:1px dotted #fed107;}
+  a:hover{color:#f7f1d2;border-bottom-color:#f7f1d2;}
+  input{font-family:'Space Mono',monospace;color:#f7f1d2;background:transparent;border:none;outline:none;}
+  input::placeholder{color:rgba(247,241,210,.35);}
+  button{font:inherit;}
+  ::selection{background:#fed107;color:#2f3019;}
+  @keyframes emblink{0%,100%{opacity:1;}50%{opacity:.2;}}
+  @keyframes acdrawer{from{transform:translateX(24px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+</style>
+</helmet>
+<div style="min-height:100vh;padding:clamp(18px,3vw,40px);color:#f7f1d2;font-family:'Jost',sans-serif;background-color:#2f3019;background-image:linear-gradient(rgba(247,241,210,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(247,241,210,.05) 1px,transparent 1px),linear-gradient(rgba(247,241,210,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(247,241,210,.025) 1px,transparent 1px);background-size:154px 154px,154px 154px,28px 28px,28px 28px;">
+  <div style="max-width:1240px;margin:0 auto;">
+
+    <header style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:20px;padding-bottom:16px;border-bottom:1px solid rgba(247,241,210,.28);margin-bottom:6px;">
+      <div>
+        <div style="display:flex;align-items:baseline;gap:10px;">
+          <span style="font-family:'Space Mono',monospace;font-size:30px;letter-spacing:-.01em;"><span style="color:#fed107;">%</span>accountability</span>
+          <span style="font-family:'Space Mono',monospace;font-size:11px;color:#fed107;letter-spacing:.1em;">v1</span>
+        </div>
+        <div style="font-family:'Jost',sans-serif;letter-spacing:.22em;text-transform:uppercase;font-size:11px;color:rgba(247,241,210,.6);margin-top:6px;">galaxy operator explorer · 256 points · probed every {{ intervalLabel }}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <button onClick="{{ toggleSound }}" style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.06em;background:transparent;border:1px solid rgba(247,241,210,.3);color:{{ soundColor }};padding:4px 9px;cursor:pointer;white-space:nowrap;" style-hover="border-color:#fed107;color:#fed107;">{{ soundLabel }}</button>
+        <div style="display:flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.08em;">
+          <span style="width:8px;height:8px;background:{{ feed.color }};border-radius:50%;animation:emblink 1.5s infinite;"></span>
+          <span style="color:{{ feed.color }};">{{ feed.label }}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;border:1px solid rgba(247,241,210,.4);padding:6px 12px 6px 8px;">
+          <div style="width:30px;height:30px;"><dc-import name="Sigil" ship="~macter-wanzod-dozzod-dozzod" hint-size="30px,30px"></dc-import></div>
+          <div>
+            <div style="font-family:'Space Mono',monospace;font-size:13px;line-height:1.1;">~macter_wanzod</div>
+            <div style="font-family:'Jost',sans-serif;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:rgba(247,241,210,.55);">probing ship · comet</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- NETWORK -->
+    <div style="margin-top:26px;">
+      <dc-import name="Panel" title="Network · All Galaxies" tag="NET-01 / last round {{ roundAgo }}" hint-size="100%,520px">
+        <div style="display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start;">
+
+          <div style="flex:1 1 560px;min-width:300px;">
+            <div style="display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px;">
+              <sc-for list="{{ cells }}" as="c" hint-placeholder-count="256">
+                <div onClick="{{ c.onClick }}" onMouseEnter="{{ c.onHover }}" title="{{ c.title }}" style="aspect-ratio:1;display:grid;place-items:center;cursor:pointer;font-family:'Space Mono',monospace;font-size:clamp(7px,.75vw,9.5px);background:{{ c.bg }};color:{{ c.fg }};border:{{ c.border }};box-shadow:{{ c.ring }};opacity:{{ c.op }};" style-hover="outline:1px solid #fed107;outline-offset:1px;">{{ c.name }}</div>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:16px;padding-top:12px;border-top:1px dashed rgba(247,241,210,.22);font-family:'Space Mono',monospace;font-size:10px;color:rgba(247,241,210,.75);">
+              <span style="display:flex;align-items:center;gap:7px;"><span style="width:11px;height:11px;border:1px solid #5dbf8d;background:rgba(93,191,141,.16);"></span>up · current</span>
+              <span style="display:flex;align-items:center;gap:7px;"><span style="width:11px;height:11px;border:1px solid #fed107;background:rgba(254,209,7,.16);"></span>up · behind</span>
+              <span style="display:flex;align-items:center;gap:7px;"><span style="width:11px;height:11px;border:1px solid rgba(240,88,38,.6);"></span>down</span>
+              <span style="display:flex;align-items:center;gap:7px;"><span style="width:11px;height:11px;border:2px solid #f05826;background:repeating-linear-gradient(45deg,transparent 0 2px,rgba(240,88,38,.45) 2px 3px);"></span>unkeyed</span>
+            </div>
+          </div>
+
+          <div style="flex:1 1 300px;min-width:270px;border-left:1px dashed rgba(247,241,210,.22);padding-left:26px;display:flex;flex-direction:column;gap:22px;">
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:rgba(247,241,210,.16);border:1px solid rgba(247,241,210,.16);">
+              <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+                <div onClick="{{ s.onClick }}" style="background:#2f3019;padding:12px 14px;cursor:pointer;" style-hover="background:#36371e;">
+                  <div style="font-family:'Space Mono',monospace;font-size:32px;line-height:1;color:{{ s.color }};">{{ s.n }}</div>
+                  <div style="font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(247,241,210,.6);margin-top:6px;">{{ s.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div>
+              <div style="font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(247,241,210,.55);margin-bottom:10px;">kelvin · galaxies serving each</div>
+              <sc-for list="{{ kelvins }}" as="k" hint-placeholder-count="2">
+                <div style="display:grid;grid-template-columns:86px minmax(0,1fr) 34px;gap:10px;align-items:center;margin-bottom:8px;font-family:'Space Mono',monospace;font-size:11.5px;">
+                  <span style="color:{{ k.color }};">{{ k.label }}</span>
+                  <div style="height:9px;border:1px solid rgba(247,241,210,.22);"><div style="height:100%;width:{{ k.pct }}%;background:{{ k.color }};"></div></div>
+                  <span style="text-align:right;">{{ k.n }}</span>
+                </div>
+              </sc-for>
+              <div style="font-family:'Space Mono',monospace;font-size:9.5px;color:rgba(247,241,210,.5);margin-top:4px;">majority kelvin is current; any other is flagged behind.</div>
+            </div>
+
+            <div>
+              <div style="font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(247,241,210,.55);margin-bottom:8px;">current %kids hash</div>
+              <div style="font-family:'Space Mono',monospace;font-size:11px;color:#5dbf8d;word-break:break-all;line-height:1.5;">{{ cur.hash }}</div>
+              <div style="font-family:'Space Mono',monospace;font-size:9.5px;color:rgba(247,241,210,.55);margin-top:5px;">{{ cur.caption }}</div>
+            </div>
+          </div>
+        </div>
+      </dc-import>
+    </div>
+
+    <!-- TABLE -->
+    <div style="margin-top:22px;">
+      <dc-import name="Panel" title="Galaxies · Ledger" tag="GAL-02 / {{ shownLabel }}" hint-size="100%,900px">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:20px;">
+          <span style="font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgba(247,241,210,.6);white-space:nowrap;">show →</span>
+          <div style="display:flex;flex-wrap:wrap;gap:1px;background:rgba(247,241,210,.4);border:1px solid rgba(247,241,210,.4);">
+            <sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
+              <button onClick="{{ f.onClick }}" style="display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap;flex:none;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:6px 13px;cursor:pointer;border:none;background:{{ f.bg }};color:{{ f.fg }};">{{ f.label }} <span style="font-family:'Space Mono',monospace;font-size:10px;opacity:.75;">{{ f.n }}</span></button>
+            </sc-for>
+          </div>
+          <div style="flex:1;"></div>
+          <div style="display:flex;align-items:center;border-bottom:1px solid rgba(247,241,210,.45);padding:2px 4px;min-width:170px;">
+            <span style="font-family:'Space Mono',monospace;color:rgba(247,241,210,.4);margin-right:2px;">~</span>
+            <input value="{{ q }}" onInput="{{ onQ }}" placeholder="filter by name" style="width:140px;font-size:13px;"/>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <div style="min-width:900px;">
+            <div style="display:grid;grid-template-columns:24px minmax(70px,1fr) 150px 96px 96px 48px 48px 62px 104px 96px;gap:12px;align-items:end;padding:0 6px 8px;border-bottom:1px solid rgba(247,241,210,.28);font-family:'Jost',sans-serif;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(247,241,210,.6);">
+              <span></span>
+              <span onClick="{{ sortBy.ship }}" style="cursor:pointer;" style-hover="color:#fed107;">galaxy {{ ar.ship }}</span>
+              <span onClick="{{ sortBy.status }}" style="cursor:pointer;" style-hover="color:#fed107;">status {{ ar.status }}</span>
+              <span onClick="{{ sortBy.w7 }}" style="cursor:pointer;" style-hover="color:#fed107;">7d {{ ar.w7 }}</span>
+              <span onClick="{{ sortBy.m30 }}" style="cursor:pointer;" style-hover="color:#fed107;">30d {{ ar.m30 }}</span>
+              <span onClick="{{ sortBy.life }}" style="cursor:pointer;text-align:right;" style-hover="color:#fed107;">life {{ ar.life }}</span>
+              <span onClick="{{ sortBy.rift }}" style="cursor:pointer;text-align:right;" style-hover="color:#fed107;">rift {{ ar.rift }}</span>
+              <span onClick="{{ sortBy.kelvin }}" style="cursor:pointer;" style-hover="color:#fed107;">kelvin {{ ar.kelvin }}</span>
+              <span onClick="{{ sortBy.hash }}" style="cursor:pointer;" style-hover="color:#fed107;">hash {{ ar.hash }}</span>
+              <span onClick="{{ sortBy.date }}" style="cursor:pointer;" style-hover="color:#fed107;">committed {{ ar.date }}</span>
+            </div>
+            <sc-for list="{{ rows }}" as="r" hint-placeholder-count="12">
+              <div onClick="{{ r.onClick }}" style="display:grid;grid-template-columns:24px minmax(70px,1fr) 150px 96px 96px 48px 48px 62px 104px 96px;gap:12px;align-items:center;padding:0 6px;height:{{ rowH }}px;border-bottom:1px solid rgba(247,241,210,.1);cursor:pointer;background:{{ r.bg }};font-family:'Space Mono',monospace;font-size:11.5px;" style-hover="background:rgba(254,209,7,.06);">
+                <div style="width:20px;height:20px;position:relative;border:1px solid rgba(247,241,210,.6);display:grid;place-items:center;">
+                  <div style="width:44%;height:44%;background:{{ r.sigil }};transform:rotate(45deg);"></div>
+                  <div style="position:absolute;top:-1px;left:-1px;width:4px;height:4px;border-top:1px solid #fed107;border-left:1px solid #fed107;"></div>
+                  <div style="position:absolute;bottom:-1px;right:-1px;width:4px;height:4px;border-bottom:1px solid #fed107;border-right:1px solid #fed107;"></div>
+                </div>
+                <span style="font-size:12.5px;">{{ r.ship }}</span>
+                <span style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
+                  <span style="font-size:9.5px;letter-spacing:.1em;border:1px solid {{ r.stColor }};color:{{ r.stColor }};padding:1px 6px;">{{ r.stLabel }}</span>
+                  <span style="font-size:10.5px;color:rgba(247,241,210,.7);">{{ r.stFor }}</span>
+                </span>
+                <span style="display:flex;align-items:center;gap:7px;">
+                  <span style="width:34px;height:6px;border:1px solid rgba(247,241,210,.22);flex:none;"><span style="display:block;height:100%;width:{{ r.w7.pct }}%;background:{{ r.w7.color }};"></span></span>
+                  <span style="color:{{ r.w7.color }};font-size:10.5px;">{{ r.w7.label }}</span>
+                </span>
+                <span style="display:flex;align-items:center;gap:7px;">
+                  <span style="width:34px;height:6px;border:1px solid rgba(247,241,210,.22);flex:none;"><span style="display:block;height:100%;width:{{ r.m30.pct }}%;background:{{ r.m30.color }};"></span></span>
+                  <span style="color:{{ r.m30.color }};font-size:10.5px;">{{ r.m30.label }}</span>
+                </span>
+                <span style="text-align:right;color:{{ r.lifeColor }};">{{ r.life }}</span>
+                <span style="text-align:right;color:{{ r.riftColor }};">{{ r.rift }}</span>
+                <span style="color:{{ r.kColor }};">{{ r.kelvin }}</span>
+                <span style="display:flex;align-items:center;gap:6px;color:{{ r.hColor }};"><span>{{ r.hash }}</span><sc-if value="{{ r.behind }}"><span style="font-size:8.5px;letter-spacing:.1em;border:1px solid #fed107;color:#fed107;padding:0 4px;">BEHIND</span></sc-if></span>
+                <span style="color:rgba(247,241,210,.75);font-size:10.5px;">{{ r.date }}</span>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noRows }}"><div style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(247,241,210,.4);padding:16px 6px;">no galaxies match.</div></sc-if>
+          </div>
+        </div>
+      </dc-import>
+    </div>
+
+    <div style="text-align:center;margin-top:28px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.1em;color:rgba(247,241,210,.4);line-height:1.8;">/apps/accountability/galaxies.json · /apps/accountability/galaxy/~ship.json · public · probes keys, liveness, %kids hash, kelvin</div>
+  </div>
+
+  <!-- DETAIL DRAWER -->
+  <sc-if value="{{ d }}">
+    <div onClick="{{ closeDetail }}" style="position:fixed;inset:0;background:rgba(20,21,10,.62);z-index:40;"></div>
+    <div style="position:fixed;top:0;right:0;bottom:0;width:min(600px,100%);z-index:41;background:#2f3019;border-left:1px solid rgba(247,241,210,.34);overflow-y:auto;animation:acdrawer .22s ease-out;box-shadow:0 6px 22px rgba(0,0,0,.4);">
+      <div style="position:absolute;top:0;left:-1px;width:13px;height:13px;border-top:2px solid #fed107;border-left:2px solid #fed107;"></div>
+      <div style="position:absolute;bottom:0;left:-1px;width:13px;height:13px;border-bottom:2px solid #fed107;border-left:2px solid #fed107;"></div>
+      <div style="padding:22px 24px 30px;">
+        <div style="display:flex;align-items:center;gap:14px;padding-bottom:14px;border-bottom:1px solid rgba(247,241,210,.22);">
+          <div style="width:42px;height:42px;flex:none;"><dc-import name="Sigil" ship="{{ d.ship }}" hint-size="42px,42px"></dc-import></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'Space Mono',monospace;font-size:22px;line-height:1.1;">{{ d.ship }}</div>
+            <div style="font-family:'Jost',sans-serif;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:rgba(247,241,210,.55);margin-top:4px;">galaxy · {{ d.idx }}</div>
+          </div>
+          <span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.1em;border:1px solid {{ d.stColor }};color:{{ d.stColor }};padding:3px 8px;">{{ d.stLabel }}</span>
+          <button onClick="{{ closeDetail }}" style="font-family:'Space Mono',monospace;font-size:14px;background:transparent;border:1px solid rgba(247,241,210,.3);color:rgba(247,241,210,.7);width:30px;height:30px;cursor:pointer;" style-hover="border-color:#fed107;color:#fed107;">×</button>
+        </div>
+
+        <sc-if value="{{ d.flags.length }}">
+          <div style="border:1.5px solid #f05826;padding:11px 14px;margin-top:16px;">
+            <sc-for list="{{ d.flags }}" as="fl">
+              <div style="display:flex;align-items:baseline;gap:9px;font-size:12.5px;line-height:1.6;"><span style="width:7px;height:7px;background:{{ fl.color }};flex:none;"></span><span style="font-family:'Jost',sans-serif;letter-spacing:.14em;text-transform:uppercase;font-size:11px;font-weight:600;color:{{ fl.color }};">{{ fl.k }}</span><span style="color:rgba(247,241,210,.85);">{{ fl.v }}</span></div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <div style="font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(247,241,210,.55);margin:22px 0 10px;">liveness</div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:rgba(247,241,210,.16);border:1px solid rgba(247,241,210,.16);">
+          <sc-for list="{{ d.up3 }}" as="u" hint-placeholder-count="3">
+            <div style="background:#2f3019;padding:10px 12px;">
+              <div style="font-family:'Space Mono',monospace;font-size:20px;color:{{ u.color }};">{{ u.label }}</div>
+              <div style="font-family:'Space Mono',monospace;font-size:9.5px;color:rgba(247,241,210,.55);margin-top:3px;">{{ u.k }} · {{ u.frac }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="margin-top:14px;">
+          <div style="display:flex;gap:2px;height:30px;align-items:stretch;">
+            <sc-for list="{{ d.strip }}" as="sd" hint-placeholder-count="30">
+              <div title="{{ sd.title }}" style="flex:1;background:{{ sd.bg }};border:{{ sd.border }};"></div>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:9px;color:rgba(247,241,210,.5);margin-top:5px;"><span>{{ d.stripFrom }}</span><span>daily rounds answered · UTC</span><span>{{ d.stripTo }}</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:6px 12px;margin-top:14px;font-family:'Space Mono',monospace;font-size:11px;">
+          <sc-for list="{{ d.live }}" as="lv">
+            <span style="color:rgba(247,241,210,.55);">{{ lv.k }}</span><span style="color:{{ lv.color }};">{{ lv.v }}</span>
+          </sc-for>
+        </div>
+
+        <div style="font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(247,241,210,.55);margin:24px 0 10px;">ota timeline · %kids revisions seen</div>
+        <sc-if value="{{ d.loading }}"><div style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(247,241,210,.45);padding:6px 0;">reading galaxy/{{ d.ship }}.json …</div></sc-if>
+        <sc-for list="{{ d.ota }}" as="o" hint-placeholder-count="2">
+          <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(247,241,210,.12);">
+            <div style="width:12px;flex:none;display:flex;flex-direction:column;align-items:center;padding-top:4px;"><span style="width:9px;height:9px;border:1.5px solid {{ o.color }};background:{{ o.fill }};"></span></div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;font-family:'Space Mono',monospace;">
+                <span style="font-size:12px;color:{{ o.color }};">{{ o.hash }}</span>
+                <span style="font-size:10.5px;color:{{ o.kColor }};">{{ o.kelvin }}</span>
+                <span style="font-size:8.5px;letter-spacing:.1em;border:1px solid {{ o.color }};color:{{ o.color }};padding:0 5px;">{{ o.tag }}</span>
+              </div>
+              <div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:3px 10px;margin-top:6px;font-family:'Space Mono',monospace;font-size:10.5px;">
+                <span style="color:rgba(247,241,210,.5);">committed</span><span>{{ o.date }}</span>
+                <span style="color:rgba(247,241,210,.5);">seen by us</span><span>{{ o.at }} <span style="color:rgba(247,241,210,.55);">· lag {{ o.lag }}</span></span>
+                <span style="color:rgba(247,241,210,.5);">vs network</span><span style="color:{{ o.netColor }};">{{ o.net }}</span>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ d.noOta }}"><div style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(247,241,210,.4);padding:6px 0;">%kids never read from this galaxy.</div></sc-if>
+
+        <div style="font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(247,241,210,.55);margin:24px 0 10px;">on-chain keys</div>
+        <div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:6px 12px;font-family:'Space Mono',monospace;font-size:11px;">
+          <sc-for list="{{ d.keys }}" as="kv">
+            <span style="color:rgba(247,241,210,.55);">{{ kv.k }}</span><span style="color:{{ kv.color }};word-break:break-all;">{{ kv.v }}</span>
+          </sc-for>
+        </div>
+        <div style="font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(247,241,210,.55);margin:20px 0 8px;">on-chain changes observed</div>
+        <sc-for list="{{ d.chain }}" as="ch">
+          <div style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px solid rgba(247,241,210,.12);font-family:'Space Mono',monospace;font-size:10.5px;">
+            <span style="color:rgba(247,241,210,.6);">{{ ch.at }}</span><span style="color:{{ ch.color }};">{{ ch.what }}</span>
+          </div>
+        </sc-for>
+        <sc-if value="{{ d.noChain }}"><div style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(247,241,210,.4);padding:6px 0;">no on-chain changes since the agent started.</div></sc-if>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;demoData&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;regular&quot;,&quot;compact&quot;],&quot;default&quot;:&quot;regular&quot;,&quot;tsType&quot;:&quot;'regular'|'compact'&quot;},&quot;sound&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  DEX = 'zodnecbudwessevpersutletfulpensytdurwepserwylsunrypsyxdyrnuphebpeglupdepdysputlughecryttyvsydnexlunmeplutseppesdelsulpedtemledtulmetwenbynhexfebpyldulhetmevruttylwydtepbesdexsefwycburderneppurrysrebdennutsubpetrulsynregtydsupsemwynrecmegnetsecmulnymtevwebsummutnyxrextebfushepbenmuswyxsymselrucdecwexsyrwetdylmynmesdetbetbeltuxtugmyrpelsyptermebsetdutdegtexsurfeltudnuxruxrenwytnubmedlytdusnebrumtynseglyxpunresredfunrevrefmectedrusbexlebduxrynnumpyxrygryxfeptyrtustyclegnemfermertenlusnussyltecmexpubrymtucfyllepdebbermughuttunbylsudpemdevlurdefbusbeprunmelpexdytbyttyplevmylwedducfurfexnulluclennerlexrupnedlecrydlydfenwelnydhusrelrudneshesfetdesretdunlernyrsebhulrylludremlysfynwerrycsugnysnyllyndyndemluxfedsedbecmunlyrtesmudnytbyrsenwegfyrmurtelreptegpecnelnevfes';
+  G='#5dbf8d'; Y='#fed107'; R='#f05826'; C='#f7f1d2'; DIM='rgba(247,241,210,.45)';
+  state = { data:null, live:false, err:false, sort:{k:'ship',d:1}, filter:'all', q:'', sel:null, details:{}, now:Date.now() };
+
+  componentDidMount(){
+    this.load();
+    this._p=setInterval(()=>this.load(),60000);
+    this._t=setInterval(()=>this.setState({now:Date.now()}),30000);
+    this._k=e=>{ if(e.key==='Escape') this.setState({sel:null}); };
+    window.addEventListener('keydown',this._k);
+    this._u=()=>{ if(this.soundOn()) this.ac(); };
+    window.addEventListener('pointerdown',this._u); window.addEventListener('keydown',this._u);
+  }
+  componentWillUnmount(){ clearInterval(this._p); clearInterval(this._t); window.removeEventListener('keydown',this._k); window.removeEventListener('pointerdown',this._u); window.removeEventListener('keydown',this._u); if(this._ac) this._ac.close(); }
+  componentDidUpdate(pp){ if(pp.demoData!==this.props.demoData){ this.setState({data:null,details:{}},()=>this.load()); } }
+
+  async load(){
+    if(this.props.demoData){ if(!this.state.data) this.setState({data:this.mock(),live:false}); return; }
+    try{
+      const r=await fetch('/apps/accountability/galaxies.json',{cache:'no-store'});
+      if(!r.ok) throw new Error(r.status);
+      const j=await r.json(); if(!j||!Array.isArray(j.galaxies)) throw new Error('shape');
+      this.setState({data:j,live:true,err:false,now:Date.now()});
+    }catch(e){
+      if(this.state.live) this.setState({err:true});
+      else if(!this.state.data) this.setState({data:this.mock(),live:false});
+    }
+  }
+  async openDetail(ship){
+    this.popSound();
+    this.setState({sel:ship});
+    if(this.state.details[ship]&&!this.state.live) return;
+    let det=null;
+    if(this.state.live){ try{ const r=await fetch('/apps/accountability/galaxy/'+ship+'.json',{cache:'no-store'}); if(r.ok) det=await r.json(); }catch(e){} }
+    if(!det){ const g=this.state.data.galaxies.find(x=>x.ship===ship); det=this.mockDetail(g); }
+    this.setState(s=>({details:{...s.details,[ship]:det}}));
+  }
+
+  // ---------- sound ----------
+  ac(){ try{ if(!this._ac){ const A=window.AudioContext||window.webkitAudioContext; if(!A) return null; this._ac=new A(); this._out=this._ac.createGain(); this._out.gain.value=.22; this._out.connect(this._ac.destination); }
+    if(this._ac.state==='suspended') this._ac.resume(); return this._ac; }catch(e){ return null; } }
+  tone(type,f,at,dur,vol,f2){ const a=this._ac, o=a.createOscillator(), g=a.createGain(); o.type=type; o.frequency.setValueAtTime(f,at); if(f2) o.frequency.exponentialRampToValueAtTime(f2,at+dur);
+    g.gain.setValueAtTime(0,at); g.gain.linearRampToValueAtTime(vol,at+.004); g.gain.exponentialRampToValueAtTime(.0001,at+dur); o.connect(g); g.connect(this._out); o.start(at); o.stop(at+dur+.02); }
+  hoverSound(kind,i){ if(!this.soundOn()) return; const a=this.ac(); if(!a||a.state!=='running') return;
+    const t=a.currentTime; if(this._last&&t-this._last<.035) return; this._last=t;
+    const col=i%16, deg=[0,2,4,7,9][col%5]+12*Math.floor(col/5), f=523.25*Math.pow(2,deg/12);
+    if(kind==='current'){ this.tone('triangle',f,t,.16,.22); this.tone('triangle',f*1.5,t+.035,.14,.14); this.tone('triangle',f*2,t+.07,.22,.1); this.tone('sine',f*4,t+.09,.18,.03); }
+    else if(kind==='behind'){ this.tone('square',f,t,.12,.045); this.tone('square',f*1.059,t+.05,.14,.035); }
+    else if(kind==='down'){ this.tone('triangle',f/4,t,.18,.2,f/5.6); }
+    else { this.tone('square',f/4,t,.05,.05); this.tone('square',f/4,t+.07,.05,.04); } }
+  popSound(){ if(!this.soundOn()) return; const a=this.ac(); if(!a) return; const t=a.currentTime+.005;
+    this.tone('sine',900,t,.07,.35,110); this.tone('square',2400,t,.012,.05); }
+  soundOn(){ return this.state.sound ?? (this.props.sound ?? true); }
+
+  // ---------- mock (seeded; matches current sanity counts) ----------
+  rng(seed){ let a=seed>>>0; return ()=>{ a=(a+0x6D2B79F5)>>>0; let t=a; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; }; }
+  shuffle(arr,r){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+  mock(){
+    const r=this.rng(408), now=Date.now(), H=3600e3, D=24*H, M=60e3;
+    const names=this.DEX.match(/.../g).map(s=>'~'+s);
+    const hx=n=>{ let s=''; for(let i=0;i<n;i++) s+='0123456789abcdef'[Math.floor(r()*16)]; return s; };
+    const b32=()=>{ const al='0123456789abcdefghijklmnopqrstuv'; let s='0v'+al[1+Math.floor(r()*30)]; for(let g=0;g<10;g++){ s+='.'; for(let i=0;i<5;i++) s+=al[Math.floor(r()*32)]; } return s; };
+    const rel={ H:{hash:b32(),kel:408,t:now-6*D}, A:{hash:b32(),kel:408,t:now-21*D}, B:{hash:b32(),kel:408,t:now-34*D}, C:{hash:b32(),kel:409,t:now-62*D}, E:{hash:b32(),kel:409,t:now-96*D} };
+    this._rel=rel; this._start=now-30*D;
+    const perm=this.shuffle([...Array(256).keys()],r);
+    const up=new Set(perm.slice(0,31)); const unkeyed=[perm[31],perm[32]];
+    const keyed=this.shuffle(perm.filter(i=>unkeyed.indexOf(i)<0),r);
+    const life1=new Set(keyed.slice(0,124)); const jael=keyed[200];
+    const upOrder=perm.slice(0,31); const relOf={};
+    upOrder.forEach((i,n)=>{ relOf[i]= n<17?'H' : n<20?'A' : n<21?'B' : n<28?'C' : 'E'; });
+    const gal=names.map((ship,i)=>{
+      let chain;
+      if(i===unkeyed[0]) chain=null;
+      else if(i===unkeyed[1]) chain={life:0,rift:0,dominion:'l1',owner:'0x'+hx(40),management:null};
+      else { const life=life1.has(i)?1:2+Math.floor(r()*r()*8); const rift=life>1&&r()<.14?1+Math.floor(r()*2):0;
+        chain= i===jael ? {life,rift,dominion:'jael',owner:null,management:null} : {life,rift,dominion:r()<.82?'l1':'l2',owner:'0x'+hx(40),management:r()<.6?'0x'+hx(40):null}; }
+      const isUp=up.has(i); let since,heard,uptime,wait={},kids=null,missing=null;
+      if(isUp){
+        since=now-(0.3+r()*24)*D; heard=now-Math.floor(r()*9)*M;
+        const w=.84+r()*.16, m=Math.min(w,.6+r()*.4);
+        uptime={day:{up:Math.round(118*(.9+r()*.1)),all:118},week:{up:Math.round(1008*w),all:1008},month:{up:Math.round(4320*m),all:4320}};
+        if(r()<.2) wait={w:now-2*M};
+        const k=relOf[i], R0=rel[k]; const date= R0.t + (k==='H'&&upOrder.indexOf(i)===0 ? 0 : r()*r()*3.2*D);
+        kids={aeon:40+Math.floor(r()*60),date:Math.round(date),hash:R0.hash,kelvin:[{lal:'zuse',num:R0.kel}]};
+      } else {
+        const never=r()<.55;
+        const sd= never ? 30 : 0.15+r()*r()*40; since= never? this._start : now-sd*D; heard= never? null : since-Math.floor(r()*10)*M;
+        const fr=(days)=>Math.max(0,1-sd/days);
+        uptime={day:{up:Math.round(118*fr(118/144)*.95),all:118},week:{up:Math.round(1008*fr(7)*.92),all:1008},month:{up:Math.round(4320*fr(30)*.9),all:4320}};
+        wait={ping:since,z:since};
+        if(!never&&r()<.08) missing=since;
+      }
+      return {ship,chain,up:isUp,since:Math.round(since),heard:heard&&Math.round(heard),uptime,kids,missing,wait,contact:null};
+    });
+    return {now,interval:600,galaxies:gal};
+  }
+  mockDetail(g){
+    const r=this.rng(this.DEX.indexOf(g.ship.slice(1))+7), now=this.state.data.now||Date.now(), D=864e5, M=6e4;
+    const start=this._start||now-30*D, today=Math.floor(now/D)*D;
+    const days=[]; for(let k=29;k>=0;k--){ const day=today-k*D; const all=k===0?118:144;
+      let upn; if(g.up) upn= r()<.18 ? all-Math.floor(r()*60) : all; else upn= (g.heard&&day+D<g.since) ? all-Math.floor(r()*r()*30) : (g.heard&&day<g.since? Math.floor(all*((g.since-day)/D)) : 0);
+      days.push({day,up:Math.max(0,upn),all}); }
+    const kidsLog=[];
+    if(g.kids&&this._rel){ const line=['E','C','B','A','H']; const cur=line.find(k=>this._rel[k].hash===g.kids.hash); let i=line.indexOf(cur);
+      kidsLog.push({at:Math.round(g.kids.date+(2+r()*9)*M),kids:g.kids});
+      for(let j=i-1;j>=Math.max(0,i-2);j--){ const R0=this._rel[line[j]]; const date=R0.t+r()*r()*2*D; const at=Math.max(date+(2+r()*9)*M,start);
+        kidsLog.push({at:Math.round(at),kids:{aeon:g.kids.aeon-(i-j),date:Math.round(date),hash:R0.hash,kelvin:[{lal:'zuse',num:R0.kel}]}}); if(at<=start) break; }
+    }
+    const chainLog=[];
+    if(g.chain){ chainLog.push({at:start,chain:g.chain.life>1&&r()<.45?{...g.chain,life:g.chain.life-1}:g.chain});
+      if(chainLog[0].chain!==g.chain) chainLog.push({at:Math.round(now-r()*24*D),chain:g.chain}); }
+    return {...g,days,kidsLog,chainLog};
+  }
+
+  // ---------- formatting ----------
+  dur(ms){ if(ms==null||isNaN(ms)) return '—'; ms=Math.max(0,ms); const m=Math.floor(ms/6e4); if(m<60) return m+'m'; const h=Math.floor(m/60); if(h<48) return h+'h '+(m%60)+'m'; const d=Math.floor(h/24); return d+'d '+(h%24)+'h'; }
+  ts(t){ if(!t) return '—'; const d=new Date(t); const p=n=>String(n).padStart(2,'0'); return d.getUTCFullYear()+'-'+p(d.getUTCMonth()+1)+'-'+p(d.getUTCDate())+' '+p(d.getUTCHours())+':'+p(d.getUTCMinutes()); }
+  day(t){ return t? this.ts(t).slice(0,10) : '—'; }
+  shortHash(h){ if(!h) return '—'; return '…'+h.replace(/\./g,'').slice(-6); }
+  kel(k){ return k&&k.kelvin&&k.kelvin.length ? k.kelvin.map(x=>x.num).join('/') : null; }
+  kelLabel(k){ return k&&k.kelvin&&k.kelvin.length ? k.kelvin.map(x=>x.lal+' '+x.num).join(' · ') : '—'; }
+  ratio(u){ return u&&u.all ? u.up/u.all : null; }
+  upCell(u){ const v=this.ratio(u); if(v==null) return {pct:0,color:this.DIM,label:'—'}; const color=v>=.95?this.G:v>=.5?this.Y:this.R; return {pct:Math.round(v*100),color,label:(v*100).toFixed(v===1||v===0?0:1)+'%'}; }
+  mode(arr){ const c={}; arr.forEach(x=>{ if(x!=null) c[x]=(c[x]||0)+1; }); let best=null,n=0; Object.keys(c).forEach(k=>{ if(c[k]>n){n=c[k];best=k;} }); return {best,n,counts:c}; }
+
+  derive(){
+    const data=this.state.data; if(!data) return null;
+    const gs=data.galaxies, now=this.state.now;
+    const resp=gs.filter(g=>g.up&&g.kids);
+    const curHash=this.mode(resp.map(g=>g.kids.hash));
+    const kAll=this.mode(gs.filter(g=>g.kids).map(g=>this.kel(g.kids)));
+    const curKel=this.mode(resp.map(g=>this.kel(g.kids))).best||kAll.best;
+    const first={};
+    const note=(k,ship)=>{ if(!k||!k.hash) return; const f=first[k.hash]; if(!f||k.date<f.date) first[k.hash]={date:k.date,ship}; };
+    gs.forEach(g=>note(g.kids,g.ship));
+    Object.values(this.state.details).forEach(d=>(d.kidsLog||[]).forEach(e=>note(e.kids,d.ship)));
+    const info=gs.map((g,i)=>{
+      const life=g.chain?g.chain.life:null;
+      const unkeyed=!g.chain||g.chain.life===0;
+      const kel=this.kel(g.kids);
+      const hashBehind=!!(g.kids&&curHash.best&&g.kids.hash!==curHash.best);
+      const kelBehind=!!(kel&&curKel&&kel!==curKel);
+      return {g,i,unkeyed,never:life===1,behind:hashBehind||kelBehind,hashBehind,kelBehind,kel};
+    });
+    return {gs,info,now,curHash,curKel,kAll,first,resp};
+  }
+  match(x,f){ if(f==='down') return !x.g.up; if(f==='behind') return x.behind; if(f==='never') return x.never; if(f==='unkeyed') return x.unkeyed; return true; }
+  sortKey(x,k){ const g=x.g, now=this.state.now;
+    switch(k){
+      case 'status': return g.since==null?0:(g.up?1:-1)*(now-g.since);
+      case 'w7': { const v=this.ratio(g.uptime&&g.uptime.week); return v==null?-1:v; }
+      case 'm30': { const v=this.ratio(g.uptime&&g.uptime.month); return v==null?-1:v; }
+      case 'life': return g.chain?g.chain.life:-1;
+      case 'rift': return g.chain?g.chain.rift:-1;
+      case 'kelvin': return x.kel?parseInt(x.kel,10):1e9;
+      case 'hash': return g.kids?(x.behind?0:1):2;
+      case 'date': return g.kids?g.kids.date:0;
+      default: return x.i;
+    } }
+
+  statusOf(g,now){
+    if(g.up) return {label:'UP',color:this.G,for:g.since?'for '+this.dur(now-g.since):'—'};
+    if(!g.heard) return {label:'DOWN',color:this.R,for:'never heard'};
+    return {label:'DOWN',color:this.R,for:g.since?'for '+this.dur(now-g.since):'—'};
+  }
+
+  detailVals(D){
+    const ship=this.state.sel; if(!ship) return null;
+    const x=D.info.find(z=>z.g.ship===ship); if(!x) return null;
+    const det=this.state.details[ship]; const g=det||x.g; const now=D.now; const st=this.statusOf(x.g,now);
+    const flags=[];
+    if(!x.g.up) flags.push({k:'down',v:x.g.heard?('last answered '+this.dur(now-x.g.heard)+' ago'):'has never answered a probe',color:this.R});
+    if(x.unkeyed) flags.push({k:'unkeyed',v:x.g.chain?'life 0 — no networking keys on chain':'no chain record',color:this.R});
+    if(x.hashBehind) flags.push({k:'behind',v:'%kids '+this.shortHash(x.g.kids.hash)+' is not the network majority '+this.shortHash(D.curHash.best),color:this.Y});
+    if(x.kelBehind) flags.push({k:'kelvin',v:'serves '+x.kel+'; majority is '+D.curKel,color:this.Y});
+    if(x.never) flags.push({k:'never rekeyed',v:'life 1 — keys have not rotated since first set',color:this.Y});
+    const U=x.g.uptime||{};
+    const up3=[['24h',U.day],['7d',U.week],['30d',U.month]].map(([k,u])=>{ const c=this.upCell(u); return {k,label:c.label,color:c.color,frac:u?u.up+'/'+u.all:'—'}; });
+    const days=(det&&det.days)||[];
+    const strip=days.map(dd=>{ const v=dd.all?dd.up/dd.all:null; let bg,border='1px solid transparent';
+      if(v==null||dd.all===0){ bg='repeating-linear-gradient(45deg,transparent 0 3px,rgba(247,241,210,.1) 3px 4px)'; border='1px solid rgba(247,241,210,.14)'; }
+      else if(v>=.95) bg=this.G; else if(v>=.5) bg=this.Y; else if(v>0) bg='rgba(240,88,38,.65)'; else { bg='transparent'; border='1px solid rgba(240,88,38,.55)'; }
+      return {bg,border,title:this.day(dd.day)+' · '+dd.up+'/'+dd.all+' rounds'}; });
+    const w=x.g.wait||{};
+    const live=[
+      {k:'status',v:st.label.toLowerCase()+' '+st.for,color:st.color},
+      {k:'since',v:x.g.since?this.ts(x.g.since)+' UTC':'— (no scored round yet)',color:this.C},
+      {k:'last heard',v:x.g.heard?this.ts(x.g.heard)+' · '+this.dur(now-x.g.heard)+' ago':'never',color:x.g.heard?this.C:this.R},
+    ];
+    if(w.ping) live.push({k:'ping pending',v:'unresponsive since '+this.ts(w.ping)+' · '+this.dur(now-w.ping),color:this.R});
+    const inflight=['w','z','x'].filter(k=>w[k]).map(k=>'%'+k+' '+this.dur(now-w[k]));
+    if(inflight.length) live.push({k:'in flight',v:inflight.join(' · '),color:this.DIM});
+    if(x.g.missing) live.push({k:'%kids empty',v:'last read came back empty '+this.ts(x.g.missing),color:this.Y});
+
+    const log=det?(det.kidsLog||[]):(x.g.kids?[{at:null,kids:x.g.kids}]:[]);
+    const ota=log.map((e,n)=>{ const k=e.kids||{}; const isCur=k.hash===D.curHash.best; const kel=this.kel(k); const kOk=kel===D.curKel;
+      const f=D.first[k.hash]; let net,netColor=this.C;
+      if(!f) net='—'; else if(f.ship===ship||k.date<=f.date) { net='first on network with this hash'; netColor=this.G; }
+      else { net='+'+this.dur(k.date-f.date)+' after '+f.ship; netColor=(k.date-f.date)>2*864e5?this.Y:this.C; }
+      const color= n===0 ? (isCur&&kOk?this.G:this.Y) : 'rgba(247,241,210,.6)';
+      return { hash:k.hash||'—', kelvin:this.kelLabel(k), kColor:kOk?'rgba(247,241,210,.7)':this.Y, color, fill:n===0?color:'transparent',
+        tag:n===0?(isCur&&kOk?'CURRENT':'BEHIND'):'SUPERSEDED', date:this.ts(k.date)+' UTC', at:e.at?this.ts(e.at)+' UTC':'—', lag:e.at&&k.date?this.dur(e.at-k.date):'—', net, netColor }; });
+
+    const c=x.g.chain;
+    const keys= c ? [
+      {k:'life',v:String(c.life)+(c.life===1?'  · never rekeyed':c.life===0?'  · unkeyed':''),color:c.life<=1?(c.life===0?this.R:this.Y):this.C},
+      {k:'rift',v:String(c.rift)+(c.rift>0?'  · breached '+c.rift+'×':''),color:c.rift>0?this.R:this.C},
+      {k:'dominion',v:c.dominion+(c.dominion==='jael'?'  · no Azimuth point; only life/rift are real':''),color:c.dominion==='jael'?this.Y:this.C},
+      {k:'owner',v:c.dominion==='jael'?'—':(c.owner||'—'),color:this.C},
+      {k:'management',v:c.dominion==='jael'?'—':(c.management||'—'),color:'rgba(247,241,210,.75)'},
+    ] : [{k:'chain',v:'null — no on-chain record',color:this.R}];
+    const cl=(det&&det.chainLog?det.chainLog.slice():[]).sort((a,b)=>a.at-b.at);
+    const chain=cl.map((e,n)=>{ const p=n?cl[n-1].chain:null, q=e.chain; let what,color=this.C;
+      if(!p){ what=q?('first seen · life '+q.life+' · rift '+q.rift):'first seen · no record'; color='rgba(247,241,210,.7)'; }
+      else { const parts=[]; if(!q) parts.push('record removed'); else { if(!p||p.life!==q.life) parts.push('life '+(p?p.life:'—')+' → '+q.life); if(!p||p.rift!==q.rift){ parts.push('rift '+(p?p.rift:'—')+' → '+q.rift); color=this.R; }
+        if(p&&p.owner!==q.owner) parts.push('owner → '+(q.owner?q.owner.slice(0,10)+'…':'—')); if(p&&p.management!==q.management) parts.push('management → '+(q.management?q.management.slice(0,10)+'…':'—')); if(p&&p.dominion!==q.dominion) parts.push('dominion '+p.dominion+' → '+q.dominion); }
+        what=parts.join(' · ')||'no field change'; if(color===this.C&&q&&p&&q.life!==p.life) color=this.G; }
+      return {at:this.ts(e.at),what,color}; }).reverse();
+    return { ship, idx:'#'+x.i, stLabel:st.label, stColor:st.color, flags, up3, strip, stripFrom:days.length?this.day(days[0].day):'', stripTo:days.length?this.day(days[days.length-1].day):'', live,
+      ota, noOta:!!det&&ota.length===0, loading:!det, keys, chain, noChain:!!det&&chain.length===0 };
+  }
+
+  renderVals(){
+    const D=this.derive(); const st=this.state;
+    const sortFn=k=>()=>this.setState(s=>({sort:{k,d:s.sort.k===k?-s.sort.d:1}}));
+    const keys=['ship','status','w7','m30','life','rift','kelvin','hash','date'];
+    const sortBy={}, ar={}; keys.forEach(k=>{ sortBy[k]=sortFn(k); ar[k]=st.sort.k===k?(st.sort.d>0?'▲':'▼'):''; });
+    const rowH=(this.props.density||'regular')==='compact'?30:38;
+    if(!D) return { intervalLabel:'10m', feed:{color:this.Y,label:'LOADING'}, roundAgo:'—', cells:[], stats:[], kelvins:[], cur:{hash:'—',caption:''}, filters:[], rows:[], noRows:false, shownLabel:'…', q:st.q, onQ:e=>this.setState({q:e.target.value}), sortBy, ar, rowH, d:null, closeDetail:()=>{} };
+    const now=D.now, info=D.info;
+    const counts={ up:info.filter(x=>x.g.up).length, down:info.filter(x=>!x.g.up).length, unkeyed:info.filter(x=>x.unkeyed).length, behind:info.filter(x=>x.behind).length, never:info.filter(x=>x.never).length };
+    const setF=f=>()=>this.setState(s=>({filter:s.filter===f&&f!=='all'?'all':f}));
+    const q=(st.q||'').trim().replace(/^~/,'').toLowerCase();
+    const vis=x=>this.match(x,st.filter)&&(!q||x.g.ship.indexOf(q)>=0);
+
+    const cells=info.map(x=>{ const g=x.g; let bg,fg,border;
+      if(x.unkeyed){ bg='repeating-linear-gradient(45deg,transparent 0 3px,rgba(240,88,38,.4) 3px 4px)'; fg=this.R; border='2px solid '+this.R; }
+      else if(g.up&&x.behind){ bg='rgba(254,209,7,.16)'; fg=this.Y; border='1px solid '+this.Y; }
+      else if(g.up){ bg='rgba(93,191,141,.16)'; fg=this.C; border='1px solid '+this.G; }
+      else { bg='transparent'; fg='rgba(240,88,38,.85)'; border='1px solid rgba(240,88,38,.5)'; }
+      const s=this.statusOf(g,now);
+      const kind=x.unkeyed?'unkeyed':g.up?(x.behind?'behind':'current'):'down';
+      return { name:g.ship.slice(1), onHover:()=>this.hoverSound(kind,x.i), bg, fg, border, ring:st.sel===g.ship?'0 0 0 2px #fed107':'none', op:vis(x)?1:.18,
+        title:g.ship+' · '+s.label.toLowerCase()+' '+s.for+(x.behind?' · behind':'')+(x.unkeyed?' · unkeyed':''), onClick:()=>this.openDetail(g.ship) }; });
+
+    const stats=[
+      {n:counts.up,label:'up',color:this.G,onClick:setF('all')},
+      {n:counts.down,label:'down',color:this.R,onClick:setF('down')},
+      {n:counts.unkeyed,label:'unkeyed',color:counts.unkeyed?this.R:this.C,onClick:setF('unkeyed')},
+      {n:counts.behind,label:'behind on ota',color:this.Y,onClick:setF('behind')},
+    ];
+    const kc=D.kAll.counts, kmax=Math.max(1,...Object.values(kc));
+    const kelvins=Object.keys(kc).sort((a,b)=>kc[b]-kc[a]).map(k=>({label:'zuse '+k, n:kc[k], pct:Math.round(kc[k]/kmax*100), color:k===D.curKel?this.G:this.Y}));
+    const cur={ hash:D.curHash.best||'—', caption:D.curHash.best?(D.curHash.n+' of '+D.resp.length+' responsive galaxies · majority, not hardcoded'):'no responsive galaxy has reported %kids' };
+
+    const F=[['all','all',info.length],['down','down',counts.down],['behind','behind',counts.behind],['never','never rekeyed',counts.never],['unkeyed','unkeyed',counts.unkeyed]];
+    const filters=F.map(([k,label,n])=>({label,n,onClick:()=>this.setState({filter:k}),bg:st.filter===k?this.C:'#2f3019',fg:st.filter===k?'#2f3019':'rgba(247,241,210,.7)'}));
+
+    const list=info.filter(vis).slice().sort((a,b)=>{ const ka=this.sortKey(a,st.sort.k), kb=this.sortKey(b,st.sort.k); return (ka<kb?-1:ka>kb?1:a.i-b.i)*st.sort.d; });
+    const rows=list.map(x=>{ const g=x.g, s=this.statusOf(g,now), c=g.chain;
+      return { ship:g.ship, onClick:()=>this.openDetail(g.ship), bg:st.sel===g.ship?'rgba(254,209,7,.08)':'transparent',
+        sigil:x.unkeyed?this.R:g.up?this.Y:'rgba(254,209,7,.35)',
+        stLabel:s.label, stColor:s.color, stFor:s.for,
+        w7:this.upCell(g.uptime&&g.uptime.week), m30:this.upCell(g.uptime&&g.uptime.month),
+        life:c?c.life:'—', lifeColor:!c||c.life===0?this.R:c.life===1?this.Y:this.C,
+        rift:c?c.rift:'—', riftColor:c&&c.rift>0?this.R:'rgba(247,241,210,.55)',
+        kelvin:x.kel||'—', kColor:x.kelBehind?this.Y:x.kel?this.C:this.DIM,
+        hash:g.kids?this.shortHash(g.kids.hash):'—', hColor:x.hashBehind?this.Y:g.kids?'rgba(247,241,210,.8)':this.DIM, behind:x.behind,
+        date:g.kids?this.day(g.kids.date):'—' }; });
+
+    const feed= st.live ? (st.err?{color:this.R,label:'STALE · fetch failed'}:{color:this.G,label:'LIVE · galaxies.json'}) : {color:this.Y,label:'DEMO DATA · API unreachable'};
+    return {
+      intervalLabel:Math.round((st.data.interval||600)/60)+'m', feed, roundAgo:this.dur(Date.now()-(st.data.now||now))+' ago',
+      cells, stats, kelvins, cur, filters, rows, noRows:rows.length===0, rowH,
+      shownLabel:rows.length+' of '+info.length, q:st.q, onQ:e=>this.setState({q:e.target.value}),
+      sortBy, ar, d:this.detailVals(D), closeDetail:()=>this.setState({sel:null}),
+      soundLabel:this.soundOn()?'♪ sound on':'♪ sound off', soundColor:this.soundOn()?this.C:this.DIM,
+      toggleSound:()=>{ const on=!this.soundOn(); this.setState({sound:on}); if(on){ this.ac(); setTimeout(()=>this.popSound(),30); } },
+    };
+  }
+}
+</script>
+</body>
+</html>

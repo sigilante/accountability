@@ -1,9 +1,9 @@
-:~  title+'Sunrise'
-    info+'A schematic agent to brighten your day.'
-    color+0xe4.9b0f
+:~  title+'Accountability'
+    info+'The state of every galaxy: liveness, keys, and %kids OTAs.'
+    color+0x1a.1a1a
     image+''
     version+[0 0 1]
-    website+'https://urbit.org/'
+    website+'https://github.com/sigilante/accountability'
     license+'MIT'
-    site+/apps/sunrise
+    site+/apps/accountability
 ==
