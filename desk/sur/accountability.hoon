@@ -85,12 +85,41 @@
                                             ::  rounds since .from
   ==
 ::
+::  +report: what an observer tells its peers, as a %noun fact
+::
+::    .at is when its last round started, and .up is each scored
+::    galaxy's state as of that round.  .days holds its tallies from
+::    one UTC day on.  The sender is the Ames-authenticated source of
+::    the fact, so the report does not name it.
+::
++$  report
+  $:  %0
+      at=(unit @da)
+      up=(list [who=@p up=?])
+      days=(list [on=@da who=@p =tally])
+  ==
+::  +peer: an observer on our whitelist, and what it has told us
+::
++$  peer
+  $:  heard=(unit @da)                      ::  when its last report came
+      nack=(unit @da)                       ::  when it last refused our
+                                            ::  subscription; ~ once it
+                                            ::  accepts
+      round=(unit @da)                      ::  its last round
+      up=(map ship ?)                       ::  as of .round
+      days=(map ship (map @da tally))       ::  by galaxy, then UTC day
+  ==
+::
 +$  action
   $%  [%interval t=@dr]                     ::  time between rounds
       [%round ~]                            ::  run a round now
       [%reset who=(unit ship)]              ::  drop probes and draft,
                                             ::  cancel the %kids watch;
                                             ::  ~ for all galaxies
+      [%peer who=ship ok=?]                 ::  add to or drop from the
+                                            ::  whitelist
+      [%fill who=ship since=@da]            ::  ask a peer again for its
+                                            ::  tallies from .since on
   ==
 ::  +point: a copy of +point:naive, to read the %azimuth agent
 ::

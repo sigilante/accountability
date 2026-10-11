@@ -46,9 +46,22 @@
 ::    .^((map ship galaxy:accountability) %gx /=accountability=/galaxies/noun)
 ::    .^((unit galaxy:accountability) %gx /=accountability=/galaxy/~zod/noun)
 ::    .^((list event:accountability) %gx /=accountability=/events/noun)
+::    .^((map ship peer:accountability) %gx /=accountability=/peers/noun)
 ::
-::  subscription, our ship only:
-::    /events gives each new event as a %noun fact; no replay
+::  peers: other observers, by whitelist
+::    Each ship keeps its own whitelist of peer observers, and the
+::    relation is bilateral: we subscribe to each peer's /report, and
+::    serve /report only to ships on our list.  A pair exchanges reports
+::    once both have added each other.  Each round we send our peers
+::    today's tallies and each galaxy's state, and resubscribe to any
+::    peer whose subscription refused or dropped.  Reports go no further
+::    than the ship that asked; we never relay one.  Peer reports are
+::    shown beside our own measurement and never change our scores.
+::
+::  subscriptions:
+::    /events, our ship only: each new event as a %noun fact; no replay
+::    /report/v0/<@da>, whitelisted peers only: a +report with our
+::      tallies from that UTC day on, then one per round with today's
 ::
 ::  HTTP, GET only, no login, CORS open to any origin by design:
 ::    /apps/accountability                      the dashboard
@@ -68,21 +81,37 @@
 ::    :accountability &accountability-action [%reset `~zod]
 ::      drop one galaxy's open probes and draft (~ for all galaxies) and
 ::      cancel its %kids watch; the next round sends fresh probes
+::    :accountability &accountability-action [%peer ~sampel-palnet &]
+::      whitelist a peer and subscribe to its reports; | drops it, its
+::      reports, and its subscription to ours
+::    :accountability &accountability-action [%fill ~sampel-palnet ~2026.1.1]
+::      resubscribe to a peer for its tallies from that day on; a new
+::      peer starts 29 days back, today included
 ::
 /-  *accountability
 /+  default-agent, dbug, verb, server, *accountability
 |%
-+$  versioned-state  $%(state-0 state-1)
-+$  state-1
-  $:  %1
++$  versioned-state  $%(state-0 state-1 state-2)
++$  state-2
+  $:  %2
       interval=@dr
       timer=(unit @da)
       last=(unit @da)                       ::  start of the previous round
       galaxies=(map ship galaxy)
       events=(list event)                   ::  newest first
+      peers=(map ship peer)                 ::  the whitelist
   ==
-::  +state-0: %1 added .events.  It reuses the current +galaxy, so
-::  freeze a copy here before changing +galaxy.
+::  +state-1: %2 added .peers.  +state-0: %1 added .events.  Both reuse
+::  the current +galaxy, so freeze a copy here before changing +galaxy.
+::
++$  state-1
+  $:  %1
+      interval=@dr
+      timer=(unit @da)
+      last=(unit @da)
+      galaxies=(map ship galaxy)
+      events=(list event)
+  ==
 ::
 +$  state-0
   $:  %0
@@ -95,7 +124,7 @@
 --
 %+  verb  |
 %-  agent:dbug
-=|  state-1
+=|  state-2
 =*  state  -
 ^-  agent:gall
 =<
@@ -117,7 +146,9 @@
   =/  ole  !<(versioned-state old)
   =?  ole  ?=(%0 -.ole)
     [%1 interval.ole timer.ole last.ole galaxies.ole ~]
-  ?>  ?=(%1 -.ole)
+  =?  ole  ?=(%1 -.ole)
+    [%2 interval.ole timer.ole last.ole galaxies.ole events.ole ~]
+  ?>  ?=(%2 -.ole)
   =.  state  ole
   =^  cards  state  abet:reset-timer:cor
   [cards this]
@@ -141,9 +172,13 @@
   ^-  (quip card _this)
   ::  Eyre opens this for public requests too, as a guest ship
   ::
-  ?+  path  (on-watch:def path)
+  ?+    path  (on-watch:def path)
     [%http-response *]  `this
     [%events ~]         ?>(=(our src):bowl `this)
+  ::
+      [%report %v0 @ ~]
+    =^  cards  state  abet:(serve:cor (slav %da i.t.t.path))
+    [cards this]
   ==
 ::
 ++  on-peek
@@ -152,6 +187,7 @@
   ?+    path  (on-peek:def path)
     [%x %galaxies ~]  ``noun+!>(galaxies)
     [%x %events ~]    ``noun+!>(events)
+    [%x %peers ~]     ``noun+!>(peers)
   ::
       [%x %galaxy @ ~]
     =/  who  (slaw %p i.t.t.path)
@@ -225,6 +261,25 @@
     =.  cor  (cancel i.whos gal)
     =.  cor  (save i.whos gal(wait ~, draft ~, missing ~))
     $(whos t.whos)
+  ::
+      %peer
+    =*  who  who.action
+    ?:  =(our.bowl who)  cor
+    ?:  ok.action
+      ?:  (~(has by peers) who)  cor
+      =.  peers  (~(put by peers) who *peer)
+      (watch who (from *peer))
+    ?.  (~(has by peers) who)  cor
+    =.  peers  (~(del by peers) who)
+    =.  cor  (unwatch who)
+    =/  paths  (report-paths `who)
+    ?~  paths  cor
+    (emit %give %kick paths `who)
+  ::
+      %fill
+    ?.  (~(has by peers) who.action)  cor
+    =.  cor  (unwatch who.action)
+    (watch who.action (day since.action))
   ==
 ::
 ++  handle-http
@@ -238,7 +293,7 @@
   =/  key  [site ext]:line
   ?+    key  not-found:gen:server
       [[%apps %accountability %galaxies ~] [~ %json]]
-    (json-out (galaxies:to-json now.bowl our.bowl interval last galaxies))
+    (json-out (galaxies:to-json now.bowl our.bowl interval last galaxies peers))
   ::
       [[%apps %accountability %galaxy @ ~] [~ %json]]
     =/  who  (slaw %p (snag 3 site.line))
@@ -246,7 +301,7 @@
     =/  gal  (~(get by galaxies) u.who)
     ?~  gal  not-found:gen:server
     =/  evs  (select `u.who ~ ~ 500)
-    (json-out (detail:to-json now.bowl u.who u.gal evs))
+    (json-out (detail:to-json now.bowl u.who u.gal evs peers))
   ::
       [[%apps %accountability %events ~] [~ %json]]
     =/  arg  (~(gas by *(map @t @t)) args.line)
@@ -335,6 +390,15 @@
     =/  who  (slav %p who.pole)
     =/  gal  (~(gut by galaxies) who *galaxy)
     (save who gal(heard `now.bowl, wait (~(del by wait.gal) %ping)))
+  ::
+      [%peer who=@ *]
+    =/  who  (slav %p who.pole)
+    =/  p  (~(get by peers) who)
+    ?~  p  cor
+    ?+  -.sign  cor
+      %watch-ack  (save-peer who u.p(nack ?~(p.sign ~ `now.bowl)))
+      %fact       ?.(=(who src.bowl) cor (hear who u.p q.q.cage.sign))
+    ==
   ==
 ::
 ++  arvo
@@ -350,7 +414,9 @@
       %-  (slog leaf+"%accountability: timer error" u.error.sign-arvo)
       cor
     =.  cor  (set-timer (add now.bowl interval))
-    round
+    =.  cor  round
+    =.  cor  meet
+    share
   ::
       [%probe who=@ %w ~]
     ?>  ?=([%clay %writ *] sign-arvo)
@@ -589,6 +655,140 @@
   |=  [who=ship gal=galaxy]
   ^+  cor
   cor(galaxies (~(put by galaxies) who gal))
+::
+::  +serve: a peer subscribed; send our tallies from .since on
+::
+++  serve
+  |=  since=@da
+  ^+  cor
+  ?>  (~(has by peers) src.bowl)
+  (emit %give %fact ~ %noun !>((tell (day since))))
+::  +share: send each subscribed peer today's tallies
+::
+++  share
+  ^+  cor
+  =/  paths  (report-paths ~)
+  ?~  paths  cor
+  (emit %give %fact paths %noun !>((tell (day now.bowl))))
+::  +tell: our report, with tallies from UTC day .from on
+::
+++  tell
+  |=  from=@da
+  ^-  report
+  :^  %0  last
+    %+  murn  ~(tap by galaxies)
+    |=  [who=ship gal=galaxy]
+    ?~  since.gal  ~
+    `[who up.gal]
+  %-  zing
+  %+  turn  ~(tap by galaxies)
+  |=  [who=ship gal=galaxy]
+  %+  murn  ~(tap by days.gal)
+  |=  [d=@da t=tally]
+  ?:  (lth d from)  ~
+  `[d who t]
+::  +report-paths: the /report paths subscribed, by .who or by anyone
+::
+++  report-paths
+  |=  who=(unit ship)
+  ^-  (list path)
+  %~  tap  in
+  %-  ~(gas in *(set path))
+  %+  murn  ~(val by sup.bowl)
+  |=  [s=ship p=path]
+  ?.  ?=([%report %v0 *] p)  ~
+  ?.  |(?=(~ who) =(u.who s))  ~
+  `p
+::  +meet: subscribe to each peer we have no subscription to
+::
+::    Gall drops a subscription that is refused or kicked, so this
+::    retries both once a round.
+::
+++  meet
+  ^+  cor
+  =/  ps  ~(tap by peers)
+  |-  ^+  cor
+  ?~  ps  cor
+  =?  cor  ?=(~ (wires p.i.ps))  (watch p.i.ps (from q.i.ps))
+  $(ps t.ps)
+::  +from: where a new subscription to a peer starts: the newest day
+::  it has reported, or 29 days back, which with today makes 30
+::
+++  from
+  |=  p=peer
+  ^-  @da
+  =|  top=(unit @da)
+  =/  ms  ~(val by days.p)
+  |-  ^-  @da
+  ?~  ms  (fall top (sub (day now.bowl) (mul 29 ~d1)))
+  =.  top
+    %+  roll  ~(tap in ~(key by i.ms))
+    |:([d=*@da a=top] `(max d (fall a d)))
+  $(ms t.ms)
+::
+++  watch
+  |=  [who=ship since=@da]
+  ^+  cor
+  =/  s  (scot %da since)
+  %-  emit
+  [%pass /peer/(scot %p who)/[s] %agent [who dap.bowl] %watch /report/v0/[s]]
+::
+++  unwatch
+  |=  who=ship
+  ^+  cor
+  =/  ws  (wires who)
+  |-  ^+  cor
+  ?~  ws  cor
+  =.  cor  (emit %pass i.ws %agent [who dap.bowl] %leave ~)
+  $(ws t.ws)
+::  +wires: our subscriptions to .who
+::
+++  wires
+  |=  who=ship
+  ^-  (list wire)
+  %+  murn  ~(tap in ~(key by wex.bowl))
+  |=  [w=wire s=ship *]
+  ?.  ?&(=(who s) ?=([%peer @ *] w) =((scot %p who) i.t.w))  ~
+  `w
+::  +hear: a report from peer .who.  It is untrusted: a malformed
+::  report is dropped whole, and a bad entry alone.
+::
+++  hear
+  |=  [who=ship p=peer dat=*]
+  ^+  cor
+  =/  rep  (mole |.(;;(report dat)))
+  ?~  rep  cor
+  =.  heard.p  `now.bowl
+  ::  keep only the newest round's states, and none from the future
+  ::
+  =?  p  ?&  ?=(^ at.u.rep)
+             (lte u.at.u.rep (add now.bowl ~h1))
+             |(?=(~ round.p) (gte u.at.u.rep u.round.p))
+         ==
+    %=  p
+      round  at.u.rep
+      up     (~(gas by *(map ship ?)) (skim up.u.rep |=([w=@p ?] (lth w 256))))
+    ==
+  =/  ds  days.u.rep
+  |-  ^+  cor
+  ?~  ds  (save-peer who p)
+  =*  e  i.ds
+  =/  ok=?
+    ?&  (lth who.e 256)
+        =(on.e (day on.e))
+        (lte on.e (add now.bowl ~d1))
+        (lte up.tally.e all.tally.e)
+        (lte all.tally.e 86.400)
+    ==
+  =?  days.p  ok
+    %+  ~(put by days.p)  who.e
+    (~(put by (~(gut by days.p) who.e *(map @da tally))) on.e tally.e)
+  $(ds t.ds)
+::
+++  save-peer
+  |=  [who=ship p=peer]
+  ^+  cor
+  cor(peers (~(put by peers) who p))
 ::
 ++  read-chain
   |=  who=ship

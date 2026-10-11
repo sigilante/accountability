@@ -29,26 +29,45 @@
   ::  +galaxies: every galaxy, without history
   ::
   ++  galaxies
-    |=  [now=@da our=@p interval=@dr last=(unit @da) gals=(map @p galaxy)]
+    |=  $:  now=@da
+            our=@p
+            interval=@dr
+            last=(unit @da)
+            gals=(map @p galaxy)
+            peers=(map @p peer)
+        ==
     ^-  json
     %-  pairs
     :~  now+(time now)
         round+(en-time last)
         observer+s+(scot %p our)
         interval+(numb (div interval ~s1))
+        :-  %peers
+        :-  %a
+        %+  turn
+          %+  sort  ~(tap by peers)
+          |=([a=[@p peer] b=[@p peer]] (lth -.a -.b))
+        |=  [who=@p p=peer]
+        %-  pairs
+        :~  ship+s+(scot %p who)
+            heard+(en-time heard.p)
+            refused+(en-time nack.p)
+            round+(en-time round.p)
+        ==
+      ::
         :-  %galaxies
         :-  %a
         %+  turn
           %+  sort  ~(tap by gals)
           |=([a=[@p galaxy] b=[@p galaxy]] (lth -.a -.b))
-        |=([who=@p gal=galaxy] (summary now who gal))
+        |=([who=@p gal=galaxy] (summary now who gal peers))
     ==
   ::  +detail: one galaxy, with daily tallies and change logs
   ::
   ++  detail
-    |=  [now=@da who=@p gal=galaxy evs=(list event)]
+    |=  [now=@da who=@p gal=galaxy evs=(list event) peers=(map @p peer)]
     ^-  json
-    =/  sum  (summary now who gal)
+    =/  sum  (summary now who gal peers)
     ?>  ?=(%o -.sum)
     :-  %o
     %-  ~(gas by p.sum)
@@ -99,11 +118,32 @@
       %gap         ~[from+(time from.c)]
     ==
   ::
+  ::  +summary: one galaxy as we see it, and as each peer reports it
+  ::
   ++  summary
-    |=  [now=@da who=@p gal=galaxy]
+    |=  [now=@da who=@p gal=galaxy peers=(map @p peer)]
     ^-  json
     %-  pairs
     :~  ship+s+(scot %p who)
+        :-  'peers'
+        :-  %a
+        %+  turn
+          %+  sort  ~(tap by peers)
+          |=([a=[@p peer] b=[@p peer]] (lth -.a -.b))
+        |=  [her=@p p=peer]
+        =/  days  (~(gut by days.p) who *(map @da tally))
+        =/  up  (~(get by up.p) who)
+        %-  pairs
+        :~  ship+s+(scot %p her)
+            up+?~(up ~ b+u.up)
+            :-  'uptime'
+            %-  pairs
+            :~  day+(en-tally (uptime days now 1))
+                week+(en-tally (uptime days now 7))
+                month+(en-tally (uptime days now 30))
+            ==
+        ==
+      ::
         chain+?~(chain.gal ~ (en-chain u.chain.gal))
         contact+(en-time contact.gal)
         heard+(en-time heard.gal)
