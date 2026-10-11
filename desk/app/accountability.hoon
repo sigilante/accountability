@@ -1,9 +1,10 @@
-::  /app/accountability: watch every galaxy
+::  /app/accountability: watch every galaxy from one observer ship
 ::
 ::    Each round, for each of the 256 galaxies, we:
 ::    - read its Azimuth point from %azimuth, or life and rift from Jael;
-::    - read Ames's last contact with it;
-::    - tally whether it answered anything since the previous round;
+::    - record Ames's last-contact time, which we report but do not score;
+::    - score the previous round: up if the galaxy answered any probe
+::      since that round began;
 ::    - poke its %ping agent, unless a poke is already in flight.
 ::
 ::    We also hold one Clay read open against each galaxy's %kids desk.
@@ -11,34 +12,62 @@
 ::    latest revision.  Each later read asks for the revision after the
 ::    last one seen, so it answers only when the galaxy commits.  Each
 ::    new revision triggers a %z read (desk hash) and an %x read of
-::    /sys/kelvin.
+::    /sys/kelvin.  Answers are untrusted: a malformed one reads as empty.
 ::
-::    A probe to a dead galaxy never answers, so we never resend a
-::    probe while one is in flight.  We resend when the galaxy's rift
-::    changes, since a breach orphans its flows, or on a %reset poke.
-::    Galaxies with no networking keys get no probes and tally as down.
+::    A probe to a dead galaxy never answers, so we never resend one
+::    while it is in flight.  We resend:
+::    - every probe, when the galaxy's rift changes (a breach orphans
+::      our flows and resets its Clay);
+::    - a %z or %x read open an hour while the galaxy answers others;
+::    - a %w read six hours after %kids last read as empty.
+::    Galaxies with no networking keys get no probes and score as down.
 ::
-::    Every change after a galaxy's first observation is logged as an
-::    +event: liveness flips, breaches, rekeys, transfers, and OTAs.
+::  measurement limits:
+::    "up" means reachable from this ship, not serving anything; times
+::    have the resolution of one round; one missed round marks a galaxy
+::    down.  A galaxy is unscored (.since is ~) until its first scored
+::    round, one interval after it is first seen.  On-chain history
+::    starts when the agent starts, because %azimuth drops raw logs after
+::    snapshots.
+::
+::  events, after each galaxy's first observation (its baseline):
+::    up, down        liveness changed
+::    breach, rekey   rift or life changed on chain
+::    owner,          owner or management proxy changed; not logged when
+::    management      either side came from the Jael fallback, which has
+::                    no addresses.  Spawn, voting, and transfer proxies,
+::                    sponsor, escape, and dominion are not tracked.
+::    ota             the galaxy committed a new %kids revision; any
+::                    commit, not only a release
+::    gap             .who is us: we ran no round for three intervals;
+::                    the next round is not scored
 ::
 ::  scries:
 ::    .^((map ship galaxy:accountability) %gx /=accountability=/galaxies/noun)
 ::    .^((unit galaxy:accountability) %gx /=accountability=/galaxy/~zod/noun)
 ::    .^((list event:accountability) %gx /=accountability=/events/noun)
 ::
-::  subscription, local only:
-::    /events gives each new event as a %noun fact
+::  subscription, our ship only:
+::    /events gives each new event as a %noun fact; no replay
 ::
-::  HTTP, no login required:
-::    GET /apps/accountability/galaxies.json
-::    GET /apps/accountability/galaxy/~zod.json
-::    GET /apps/accountability/events.json?ship=~zod&since=<ms>&before=<ms>&limit=500
-::    GET /apps/accountability                    the dashboard
+::  HTTP, GET only, no login, CORS open to any origin by design:
+::    /apps/accountability                      the dashboard
+::    /apps/accountability/galaxies.json        every galaxy, summarized
+::    /apps/accountability/galaxy/~zod.json     one galaxy with its logs
+::    /apps/accountability/events.json          newest first; filters:
+::      ship=~zod, since=<ms>, before=<ms> (both exclusive, Unix ms),
+::      limit=<n> (default 500).  Unparseable filters are ignored.
+::    /apps/accountability/sigil.js, fnt/*      page assets
 ::
-::  pokes:
+::  pokes, our ship only:
 ::    :accountability &accountability-action [%interval ~m5]
+::      time between rounds, from the next round on; default ~m10
 ::    :accountability &accountability-action [%round ~]
+::      run a round now and restart the cadence.  It scores a round,
+::      so a galaxy slow to answer can read down for one round.
 ::    :accountability &accountability-action [%reset `~zod]
+::      drop one galaxy's open probes and draft (~ for all galaxies) and
+::      cancel its %kids watch; the next round sends fresh probes
 ::
 /-  *accountability
 /+  default-agent, dbug, verb, server, *accountability
@@ -52,6 +81,9 @@
       galaxies=(map ship galaxy)
       events=(list event)                   ::  newest first
   ==
+::  +state-0: %1 added .events.  It reuses the current +galaxy, so
+::  freeze a copy here before changing +galaxy.
+::
 +$  state-0
   $:  %0
       interval=@dr
@@ -184,7 +216,9 @@
   ::
       %reset
     =/  whos=(list ship)
-      ?~(who.action ~(tap in ~(key by galaxies)) ~[u.who.action])
+      ?~  who.action  ~(tap in ~(key by galaxies))
+      ?.  =(%czar (clan:title u.who.action))  ~
+      ~[u.who.action]
     |-  ^+  cor
     ?~  whos  cor
     =/  gal  (~(gut by galaxies) i.whos *galaxy)
@@ -217,12 +251,8 @@
       [[%apps %accountability %events ~] [~ %json]]
     =/  arg  (~(gas by *(map @t @t)) args.line)
     =/  who=(unit ship)  (biff (~(get by arg) 'ship') (cury slaw %p))
-    =/  since=(unit @da)
-      %+  bind  (biff (~(get by arg) 'since') |=(t=@t (rush t dem)))
-      from-unix-ms:chrono:userlib
-    =/  before=(unit @da)
-      %+  bind  (biff (~(get by arg) 'before') |=(t=@t (rush t dem)))
-      from-unix-ms:chrono:userlib
+    =/  since=(unit @ud)   (biff (~(get by arg) 'since') |=(t=@t (rush t dem)))
+    =/  before=(unit @ud)  (biff (~(get by arg) 'before') |=(t=@t (rush t dem)))
     =/  limit=@ud
       (fall (biff (~(get by arg) 'limit') |=(t=@t (rush t dem))) 500)
     (json-out (events:to-json (select who since before limit)))
@@ -268,16 +298,21 @@
 ::  +select: newest events first, for .who, after .since, before
 ::  .before, up to .limit
 ::
+::    .since and .before are Unix milliseconds, compared against each
+::    event's time rounded the way the JSON rounds it, so a client can
+::    pass back the newest .at it holds without getting it again.
+::
 ++  select
-  |=  [who=(unit ship) since=(unit @da) before=(unit @da) limit=@ud]
+  |=  [who=(unit ship) since=(unit @ud) before=(unit @ud) limit=@ud]
   ^-  (list event)
   =|  out=(list event)
   =/  n=@ud  0
   =/  evs  events
   |-  ^-  (list event)
   ?:  |(?=(~ evs) =(n limit))  (flop out)
-  ?:  ?&(?=(^ since) (lte at.i.evs u.since))  (flop out)
-  ?:  ?&(?=(^ before) (gte at.i.evs u.before))  $(evs t.evs)
+  =/  ms  (unm:chrono:userlib at.i.evs)
+  ?:  ?&(?=(^ since) (lte ms u.since))  (flop out)
+  ?:  ?&(?=(^ before) (gte ms u.before))  $(evs t.evs)
   ?.  |(?=(~ who) =(u.who who.i.evs))  $(evs t.evs)
   $(evs t.evs, out [i.evs out], n +(n))
 ::  +json-out: JSON any origin may read, for local front-end work
@@ -321,11 +356,11 @@
     ?>  ?=([%clay %writ *] sign-arvo)
     (take-w (slav %p who.pole) p.sign-arvo)
   ::
-      [%probe who=@ %z aeon=@ ~]
+      [%probe who=@ %z aeon=@ *]
     ?>  ?=([%clay %writ *] sign-arvo)
     (take-z (slav %p who.pole) (slav %ud aeon.pole) p.sign-arvo)
   ::
-      [%probe who=@ %x aeon=@ ~]
+      [%probe who=@ %x aeon=@ *]
     ?>  ?=([%clay %writ *] sign-arvo)
     (take-x (slav %p who.pole) (slav %ud aeon.pole) p.sign-arvo)
   ==
@@ -383,6 +418,10 @@
     (note who %breach rift.old rift.new)
   =?  cor  !=(life.old life.new)
     (note who %rekey life.old life.new)
+  ::  a Jael fallback carries no addresses, so moving to or from one
+  ::  is not a transfer
+  ::
+  ?:  |(?=(%jael dominion.old) ?=(%jael dominion.new))  cor
   =?  cor  !=(owner.old owner.new)
     (note who %owner owner.old owner.new)
   =?  cor  !=(management.old management.new)
@@ -425,6 +464,28 @@
   =?  cor  read  (emit (warp who /probe/[w]/w %w case /))
   =?  wait.gal  ping  (~(put by wait.gal) %ping now.bowl)
   =?  wait.gal  read  (~(put by wait.gal) %w now.bowl)
+  ::  A %z or %x read open for an hour while the galaxy answers other
+  ::  probes has lost its answer; ask again on a fresh wire.
+  ::
+  =/  aeon=(unit @ud)  (bind draft.gal |=(d=draft aeon.d))
+  =/  lost
+    |=  p=?(%z %x)
+    ^-  ?
+    =/  sent  (~(get by wait.gal) p)
+    ?&  ?=(^ aeon)
+        ?=(^ sent)
+        ?=(^ heard.gal)
+        (gte (sub now.bowl u.sent) ~h1)
+        (gth u.heard.gal u.sent)
+    ==
+  =/  rz  (lost %z)
+  =/  rx  (lost %x)
+  =/  a  ?~(aeon %$ (scot %ud u.aeon))
+  =/  t  (scot %da now.bowl)
+  =?  cor  rz  (emit (warp who /probe/[w]/z/[a]/[t] %z ud+(need aeon) /))
+  =?  cor  rx  (emit (warp who /probe/[w]/x/[a]/[t] %x ud+(need aeon) /sys/kelvin))
+  =?  wait.gal  rz  (~(put by wait.gal) %z now.bowl)
+  =?  wait.gal  rx  (~(put by wait.gal) %x now.bowl)
   (save who gal)
 ::  +take-w: a %kids revision; read its hash and kelvin if it is new
 ::
@@ -434,9 +495,14 @@
   =/  gal  (~(gut by galaxies) who *galaxy)
   =.  heard.gal  `now.bowl
   =.  wait.gal   (~(del by wait.gal) %w)
-  ?~  riot
+  ::  galaxies are untrusted, so a malformed answer reads as empty
+  ::
+  =/  cas=(unit cass:clay)
+    ?~  riot  ~
+    (mole |.(;;(cass:clay q.q.r.u.riot)))
+  ?~  cas
     (save who gal(missing `now.bowl))
-  =/  cas  ;;(cass:clay q.q.r.u.riot)
+  =/  cas  u.cas
   =.  missing.gal  ~
   =/  new=?
     ?&  !=(`ud.cas (bind kids.gal |=(k=kids aeon.k)))
@@ -463,7 +529,10 @@
   ?.  ?&(?=(^ draft.gal) =(aeon aeon.u.draft.gal))
     (save who gal)
   =.  wait.gal  (~(del by wait.gal) %z)
-  =.  hash.u.draft.gal  `?~(riot 0v0 ;;(@uvI q.q.r.u.riot))
+  =.  hash.u.draft.gal
+    :-  ~
+    ?~  riot  0v0
+    (fall (mole |.(;;(@uvI q.q.r.u.riot))) 0v0)
   (finish who gal)
 ::
 ++  take-x
@@ -475,7 +544,9 @@
     (save who gal)
   =.  wait.gal  (~(del by wait.gal) %x)
   =.  kelvin.u.draft.gal
-    `?~(riot ~ (waft-to-wefts:clay ;;(waft:clay q.q.r.u.riot)))
+    :-  ~
+    ?~  riot  ~
+    (fall (mole |.((waft-to-wefts:clay ;;(waft:clay q.q.r.u.riot)))) ~)
   (finish who gal)
 ::  +finish: commit .gal's draft if complete; log an OTA if it is new
 ::

@@ -163,7 +163,9 @@ header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap
 .thead span[data-sort]:hover{color:var(--gold)}
 .row{align-items:center;padding:0 6px;height:var(--row-h);border-bottom:1px solid rgba(247,241,210,.1);cursor:pointer;
   font-family:var(--mono);font-size:11.5px}
-.row:hover{background:rgba(254,209,7,.06)}
+.row:hover{background:rgba(254,209,7,.1);box-shadow:inset 2px 0 0 var(--gold)}
+.row.sel{background:rgba(254,209,7,.08)}
+.row.sel:hover{background:rgba(254,209,7,.14)}
 .row .r{text-align:right}
 .st{display:flex;align-items:center;gap:8px;white-space:nowrap}
 .st .for{font-size:10.5px;color:rgba(247,241,210,.7)}
@@ -246,8 +248,8 @@ footer{text-align:center;margin-top:28px;font-family:var(--mono);font-size:10px;
       <div class="net-l">
         <div class="grid" id="grid"></div>
         <div class="legend">
-          <span><i style="border:1px solid #5dbf8d;background:rgba(93,191,141,.16)"></i>up · current</span>
-          <span><i style="border:1px solid #fed107;background:rgba(254,209,7,.16)"></i>up · behind</span>
+          <span><i style="border:1px solid #5dbf8d;background:rgba(93,191,141,.16)"></i>up · matches ~zod</span>
+          <span><i style="border:1px solid #fed107;background:rgba(254,209,7,.16)"></i>up · behind ~zod</span>
           <span><i style="border:1px solid rgba(240,88,38,.6)"></i>down</span>
           <span><i style="border:2px solid #f05826;background:repeating-linear-gradient(45deg,transparent 0 2px,rgba(240,88,38,.45) 2px 3px)"></i>unkeyed</span>
         </div>
@@ -257,10 +259,10 @@ footer{text-align:center;margin-top:28px;font-family:var(--mono);font-size:10px;
         <div>
           <div class="cap" style="margin-bottom:10px">kelvin · galaxies serving each</div>
           <div id="kelvins"></div>
-          <div class="note">majority kelvin is current; any other is flagged behind.</div>
+          <div class="note">~zod is the canonical OTA source; any other kelvin is behind.</div>
         </div>
         <div>
-          <div class="cap" style="margin-bottom:8px">current %kids hash</div>
+          <div class="cap" style="margin-bottom:8px">~zod %kids hash · canonical</div>
           <div class="mono" id="cur-hash" style="font-size:11px;color:#5dbf8d;word-break:break-all;line-height:1.5">—</div>
           <div class="note" id="cur-cap" style="margin-top:5px"></div>
         </div>
@@ -290,10 +292,7 @@ footer{text-align:center;margin-top:28px;font-family:var(--mono);font-size:10px;
     </div></div>
   </section>
 
-  <footer>
-    interval length: <span id="interval">10 min</span><br>
-    /apps/accountability/galaxies.json · galaxy/~ship.json · events.json · public · probes keys, liveness, %kids hash, kelvin
-  </footer>
+  <footer>interval length: <span id="interval">10 min</span></footer>
 </div>
 
 <div id="detail"></div>
@@ -335,8 +334,10 @@ function mode(arr){ const c = {}; arr.forEach(x => { if(x != null) c[x] = (c[x]|
   let best = null, n = 0; Object.keys(c).forEach(k => { if(c[k] > n){ n = c[k]; best = k; } }); return {best, n, counts:c}; }
 
 // ---------- names and sigils ----------
-// sigil-js draws galaxies, stars, and planets only; moons and comets get the
-// design's placeholder mark instead of a sigil that belongs to another point.
+// sigil-js draws galaxies, stars, and planets (up to four syllables).  A
+// comet's sixteen syllables are drawn as a 4x4 grid, row by row, by tiling
+// four 2x2 sigils; each tile's syllables alternate prefix and suffix as a
+// planet's do.  Moons get the design's placeholder mark.
 function syllables(p){ return p.replace(/^~/,'').split(/-+/).join('').length/3; }
 function clan(p){ const n = syllables(p); return n === 1 ? 'galaxy' : n === 2 ? 'star' : n <= 4 ? 'planet' : n <= 8 ? 'moon' : 'comet'; }
 function cite(p){ if(syllables(p) <= 4) return p; const w = p.replace(/^~/,'').split(/-+/); return '~'+w[0]+'_'+w[w.length-1]; }
@@ -345,9 +346,16 @@ function drawSigil(ship, size, fg){
   const key = ship+'|'+size+'|'+fg;
   if(sigCache.has(key)) return sigCache.get(key);
   let svg = '<i class="ph-mark"></i>';
-  if(window.sigil && ['galaxy','star','planet'].includes(clan(ship))){
-    try{ svg = window.sigil({point:ship, size, foreground:fg, background:GROUND, detail:size < 48 ? 'none' : 'default', space:'none'}); }catch(e){}
-  }
+  const one = (p, px) => window.sigil({point:p, size:px, foreground:fg, background:GROUND, detail:px < 48 ? 'none' : 'default', space:'none'});
+  try{
+    if(window.sigil && ['galaxy','star','planet'].includes(clan(ship))) svg = one(ship, size);
+    else if(window.sigil && clan(ship) === 'comet'){
+      const s = ship.replace(/[~-]/g,'').match(/.../g);
+      const tile = ix => '~'+s[ix[0]]+s[ix[1]]+'-'+s[ix[2]]+s[ix[3]];
+      const tiles = [[0,1,4,5],[2,3,6,7],[8,9,12,13],[10,11,14,15]].map(ix => one(tile(ix), size/2));
+      svg = '<div style="display:grid;grid-template-columns:1fr 1fr;width:'+size+'px;height:'+size+'px">'+tiles.join('')+'</div>';
+    }
+  }catch(e){}
   sigCache.set(key, svg);
   return svg;
 }
@@ -368,6 +376,7 @@ function hoverSound(kind, i){ if(!S.sound) return; const a = audio(); if(!a || a
   if(kind === 'current'){ tone('triangle',f,t,.16,.22); tone('triangle',f*1.5,t+.035,.14,.14); tone('triangle',f*2,t+.07,.22,.1); tone('sine',f*4,t+.09,.18,.03); }
   else if(kind === 'behind'){ tone('square',f,t,.12,.045); tone('square',f*1.059,t+.05,.14,.035); }
   else if(kind === 'down'){ tone('triangle',f/4,t,.18,.2,f/5.6); }
+  else if(kind === 'unscored'){ return; }
   else { tone('square',f/4,t,.05,.05); tone('square',f/4,t+.07,.05,.04); } }
 function popSound(){ if(!S.sound) return; const a = audio(); if(!a) return; const t = a.currentTime+.005;
   tone('sine',900,t,.07,.35,110); tone('square',2400,t,.012,.05); }
@@ -390,7 +399,8 @@ async function loadEvents(){
       const evs = await getJSON('/events.json?limit=200');
       S.events = evs; S.evOld = evs.length === 200;
     }else{
-      const evs = await getJSON('/events.json?since='+S.events[0].at+'&limit=500');
+      const seen = new Set(S.events.map(evKey));
+      const evs = (await getJSON('/events.json?since='+S.events[0].at+'&limit=500')).filter(e => !seen.has(evKey(e)));
       if(evs.length){ evs.forEach(e => S.fresh.add(evKey(e))); S.events = evs.concat(S.events); }
     }
   }catch(e){}
@@ -401,10 +411,14 @@ async function olderEvents(){
   if(!S.events.length) return;
   try{
     const evs = await getJSON('/events.json?before='+S.events[S.events.length-1].at+'&limit=200');
-    S.events = S.events.concat(evs); S.evOld = evs.length === 200;
+    const seen = new Set(S.events.map(evKey));
+    S.events = S.events.concat(evs.filter(e => !seen.has(evKey(e)))); S.evOld = evs.length === 200;
   }catch(e){}
   renderEvents();
 }
+
+// ~zod's %kids history is the reference for every galaxy's OTA timeline
+async function loadZod(){ try{ S.details['~zod'] = await getJSON('/galaxy/~zod.json'); render(); }catch(e){} }
 
 async function openDetail(ship){
   popSound();
@@ -417,26 +431,28 @@ async function openDetail(ship){
 function derive(){
   const data = S.data; if(!data) return null;
   const gs = data.galaxies, now = S.now;
-  const resp = gs.filter(g => g.up && g.kids);
-  const curHash = mode(resp.map(g => g.kids.hash));
+  // ~zod is the canonical OTA source: its %kids hash and kelvin are current
+  const zod = gs.find(g => g.ship === '~zod');
+  const ref = zod && zod.kids ? {hash:zod.kids.hash, kel:kel(zod.kids), date:zod.kids.date} : null;
   const kAll = mode(gs.filter(g => g.kids).map(g => kel(g.kids)));
-  const curKel = mode(resp.map(g => kel(g.kids))).best || kAll.best;
-  // earliest commit of each hash on the network, from summaries and loaded logs
-  const first = {};
-  const note = (k, ship) => { if(!k || !k.hash) return; const f = first[k.hash]; if(!f || k.date < f.date) first[k.hash] = {date:k.date, ship}; };
-  gs.forEach(g => note(g.kids, g.ship));
-  Object.values(S.details).forEach(d => (d.kidsLog || []).forEach(e => note(e.kids, d.ship)));
+  // every %kids revision ~zod has served, by hash, with its commit date
+  const zodLog = {};
+  const zl = S.details['~zod'] && S.details['~zod'].kidsLog || [];
+  zl.concat(zod && zod.kids ? [{kids:zod.kids}] : []).forEach(e => { const k = e.kids; if(k && k.hash && !(k.hash in zodLog)) zodLog[k.hash] = k.date; });
   const info = gs.map((g, i) => {
     const unkeyed = !g.chain || g.chain.life === 0;
+    const scored = g.since != null;
     const k = kel(g.kids);
-    const hashBehind = !!(g.kids && curHash.best && g.kids.hash !== curHash.best);
-    const kelBehind = !!(k && curKel && k !== curKel);
-    return {g, i, unkeyed, behind:hashBehind || kelBehind, hashBehind, kelBehind, kel:k};
+    const hashBehind = !!(ref && g.kids && g.kids.hash !== ref.hash);
+    const kelBehind = !!(ref && k && k !== ref.kel);
+    return {g, i, unkeyed, scored, behind:hashBehind || kelBehind, hashBehind, kelBehind, kel:k};
   });
-  return {gs, info, now, curHash, curKel, kAll, first, resp};
+  const matching = info.filter(x => x.g.kids && ref && !x.behind).length;
+  return {gs, info, now, ref, kAll, zodLog, matching, read:info.filter(x => x.g.kids).length};
 }
 
-function match(x, f){ if(f === 'down') return !x.g.up; if(f === 'behind') return x.behind; if(f === 'unkeyed') return x.unkeyed; return true; }
+function isDown(x){ return x.scored && !x.g.up && !x.unkeyed; }
+function match(x, f){ if(f === 'down') return isDown(x); if(f === 'behind') return x.behind; if(f === 'unkeyed') return x.unkeyed; return true; }
 function sortKey(x, k){ const g = x.g, now = S.now;
   switch(k){
     case 'status': return g.since == null ? 0 : (g.up ? 1 : -1)*(now-g.since);
@@ -450,7 +466,9 @@ function sortKey(x, k){ const g = x.g, now = S.now;
     default: return x.i;
   } }
 function statusOf(g, now){
-  if(g.up) return {label:'UP', color:G, for:g.since ? 'for '+dur(now-g.since) : '—'};
+  if(!g.chain || g.chain.life === 0) return {label:'UNKEYED', color:R, for:'no networking keys'};
+  if(g.since == null) return {label:'UNSCORED', color:DIM, for:'first round pending'};
+  if(g.up) return {label:'UP', color:G, for:'for '+dur(now-g.since)};
   if(!g.heard) return {label:'DOWN', color:R, for:'never heard'};
   return {label:'DOWN', color:R, for:g.since ? 'for '+dur(now-g.since) : '—'};
 }
@@ -467,7 +485,7 @@ function evView(e, D){
     case 'management': return {label:'MGMT', color:Y, what:'management '+shortAddr(e.from)+' → '+shortAddr(e.to)};
     case 'ota': {
       const kf = kel(e.from), kt = kel(e.to);
-      const cur = D && D.curHash.best === e.to.hash;
+      const cur = D && D.ref && D.ref.hash === e.to.hash;
       return {label:'OTA', color:cur ? G : Y, what:shortHash(e.from.hash)+' → '+shortHash(e.to.hash)+(kf !== kt ? ' · kelvin '+(kf||'—')+' → '+(kt||'—') : '')+' · lag '+dur(e.at-e.to.date)};
     }
     case 'gap':        return {label:'GAP', color:DIM, what:'observer ran no rounds since '+ts(e.from)+' UTC · not scored'};
@@ -512,12 +530,13 @@ function renderHeader(D){
   // the full @p stays available on hover
   const me = S.data.observer || '';
   $('observer').title = me;
-  $('observer').innerHTML = me ? sigBox(me, 30, Y, 26)+'<div class="role">probing ship</div>' : '';
+  $('observer').innerHTML = me ? sigBox(me, 30, Y, 28)+
+    '<div><div class="who">'+esc(cite(me))+'</div><div class="role">probing ship</div></div>' : '';
 }
 
 function renderNet(D){
   const st = S, now = D.now, info = D.info;
-  const counts = {up:info.filter(x => x.g.up).length, down:info.filter(x => !x.g.up).length,
+  const counts = {up:info.filter(x => x.scored && x.g.up).length, down:info.filter(isDown).length,
     unkeyed:info.filter(x => x.unkeyed).length, behind:info.filter(x => x.behind).length};
   $('net-tag').textContent = 'NET-01 / last round '+dur(Date.now()-(S.data.now || now))+' ago';
   const q = st.q.trim().replace(/^~/,'').toLowerCase();
@@ -526,11 +545,12 @@ function renderNet(D){
     if(x.unkeyed){ bg = 'repeating-linear-gradient(45deg,transparent 0 3px,rgba(240,88,38,.4) 3px 4px)'; fg = R; border = '2px solid '+R; }
     else if(g.up && x.behind){ bg = 'rgba(254,209,7,.16)'; fg = Y; border = '1px solid '+Y; }
     else if(g.up){ bg = 'rgba(93,191,141,.16)'; fg = C; border = '1px solid '+G; }
+    else if(!x.scored){ bg = 'transparent'; fg = DIM; border = '1px dashed rgba(247,241,210,.3)'; }
     else { bg = 'transparent'; fg = 'rgba(240,88,38,.85)'; border = '1px solid rgba(240,88,38,.5)'; }
     const s = statusOf(g, now);
-    const kind = x.unkeyed ? 'unkeyed' : g.up ? (x.behind ? 'behind' : 'current') : 'down';
+    const kind = x.unkeyed ? 'unkeyed' : !x.scored ? 'unscored' : g.up ? (x.behind ? 'behind' : 'current') : 'down';
     const vis = match(x, st.filter) && (!q || g.ship.indexOf(q) >= 0);
-    const title = g.ship+' · '+s.label.toLowerCase()+' '+s.for+(x.behind ? ' · behind' : '')+(x.unkeyed ? ' · unkeyed' : '');
+    const title = g.ship+' · '+s.label.toLowerCase()+' '+s.for+(x.behind ? ' · behind ~zod' : '');
     return '<div class="cell" data-ship="'+esc(g.ship)+'" data-kind="'+kind+'" data-i="'+x.i+'" title="'+esc(title)+'" style="background:'+bg+';color:'+fg+';border:'+border+
       ';box-shadow:'+(st.sel === g.ship ? '0 0 0 2px #fed107' : 'none')+';opacity:'+(vis ? 1 : .18)+'"><span class="nm">'+esc(g.ship.slice(1))+'</span><span class="sg"></span></div>';
   }).join('');
@@ -538,22 +558,22 @@ function renderNet(D){
     {n:counts.up, label:'up', color:G, f:'all'},
     {n:counts.down, label:'down', color:R, f:'down'},
     {n:counts.unkeyed, label:'unkeyed', color:counts.unkeyed ? R : C, f:'unkeyed'},
-    {n:counts.behind, label:'behind on ota', color:Y, f:'behind'},
+    {n:counts.behind, label:'behind ~zod', color:Y, f:'behind'},
   ];
   $('stats').innerHTML = stats.map(s => '<div class="stat" data-filter="'+s.f+'"><div class="n" style="color:'+s.color+'">'+s.n+'</div><div class="l">'+s.label+'</div></div>').join('');
   const kc = D.kAll.counts, kmax = Math.max(1, ...Object.values(kc));
-  $('kelvins').innerHTML = Object.keys(kc).sort((a, b) => kc[b]-kc[a]).map(k => { const color = k === D.curKel ? G : Y;
+  $('kelvins').innerHTML = Object.keys(kc).sort((a, b) => kc[b]-kc[a]).map(k => { const color = D.ref && k === D.ref.kel ? G : Y;
     return '<div class="kbar"><span style="color:'+color+'">zuse '+esc(k)+'</span><div class="bar"><div style="width:'+Math.round(kc[k]/kmax*100)+'%;background:'+color+'"></div></div><span style="text-align:right">'+kc[k]+'</span></div>'; }).join('')
     || '<div class="empty">no %kids read yet.</div>';
-  $('cur-hash').textContent = D.curHash.best || '—';
-  $('cur-cap').textContent = D.curHash.best ? D.curHash.n+' of '+D.resp.length+' responsive galaxies · majority, not hardcoded' : 'no responsive galaxy has reported %kids';
+  $('cur-hash').textContent = D.ref ? D.ref.hash : '—';
+  $('cur-cap').textContent = D.ref ? D.matching+' of '+D.read+' galaxies with a %kids read match ~zod' : '~zod has not answered a %kids read; nothing is marked behind';
 }
 
 function renderLedger(D){
   const st = S, now = D.now, info = D.info;
-  const counts = {down:info.filter(x => !x.g.up).length, behind:info.filter(x => x.behind).length,
+  const counts = {down:info.filter(isDown).length, behind:info.filter(x => x.behind).length,
     unkeyed:info.filter(x => x.unkeyed).length};
-  const F = [['all','all',info.length],['down','down',counts.down],['behind','behind',counts.behind],['unkeyed','unkeyed',counts.unkeyed]];
+  const F = [['all','all',info.length],['down','down',counts.down],['behind','behind ~zod',counts.behind],['unkeyed','unkeyed',counts.unkeyed]];
   $('filters').innerHTML = F.map(([k, label, n]) => '<button data-filter="'+k+'" class="'+(st.filter === k ? 'on' : '')+'">'+label+' <span>'+n+'</span></button>').join('');
   const cols = [['',''],['ship','galaxy'],['status','status'],['w7','7d'],['m30','30d'],['life','life','r'],['rift','rift','r'],['kelvin','kelvin'],['hash','hash'],['date','committed']];
   $('thead').innerHTML = cols.map(([k, label, cls]) => k ? '<span data-sort="'+k+'"'+(cls ? ' class="'+cls+'" style="text-align:right"' : '')+'>'+label+' '+(st.sort.k === k ? (st.sort.d > 0 ? '▲' : '▼') : '')+'</span>' : '<span></span>').join('');
@@ -571,7 +591,7 @@ function renderLedger(D){
     const kColor = x.kelBehind ? Y : x.kel ? C : DIM;
     const hColor = x.hashBehind ? Y : g.kids ? 'rgba(247,241,210,.8)' : DIM;
     const bar = u => '<span class="up"><span class="bar"><span style="width:'+u.pct+'%;background:'+u.color+'"></span></span><span class="lab" style="color:'+u.color+'">'+u.label+'</span></span>';
-    return '<div class="cols row" data-ship="'+esc(g.ship)+'" style="background:'+(st.sel === g.ship ? 'rgba(254,209,7,.08)' : 'transparent')+'">'+
+    return '<div class="cols row'+(st.sel === g.ship ? ' sel' : '')+'" data-ship="'+esc(g.ship)+'">'+
       sigBox(g.ship, 20, sigColor, 18)+
       '<span style="font-size:12.5px">'+esc(g.ship)+'</span>'+
       '<span class="st"><span class="badge" style="color:'+s.color+';border-color:'+s.color+'">'+s.label+'</span><span class="for">'+esc(s.for)+'</span></span>'+
@@ -591,13 +611,13 @@ function renderDetail(D){
   const det = S.details[ship], g = x.g, now = D.now, st = statusOf(g, now);
 
   const flags = [];
-  if(!g.up) flags.push({k:'down', v:g.heard ? 'last answered '+dur(now-g.heard)+' ago' : 'has never answered a probe', color:R});
+  if(isDown(x)) flags.push({k:'down', v:g.heard ? 'last answered '+dur(now-g.heard)+' ago' : 'has never answered a probe', color:R});
   if(x.unkeyed) flags.push({k:'unkeyed', v:g.chain ? 'life 0 — no networking keys on chain' : 'no chain record', color:R});
-  if(x.hashBehind) flags.push({k:'behind', v:'%kids '+shortHash(g.kids.hash)+' is not the network majority '+shortHash(D.curHash.best), color:Y});
-  if(x.kelBehind) flags.push({k:'kelvin', v:'serves '+x.kel+'; majority is '+D.curKel, color:Y});
+  if(x.hashBehind) flags.push({k:'behind ~zod', v:'serves %kids '+shortHash(g.kids.hash)+'; ~zod serves '+shortHash(D.ref.hash), color:Y});
+  if(x.kelBehind) flags.push({k:'kelvin', v:'serves '+x.kel+'; ~zod serves '+D.ref.kel, color:Y});
 
   const U = g.uptime || {};
-  const up3 = [['24h', U.day], ['7d', U.week], ['30d', U.month]].map(([k, u]) => { const c = upCell(u);
+  const up3 = [['today', U.day], ['7 days', U.week], ['30 days', U.month]].map(([k, u]) => { const c = upCell(u);
     return '<div><div class="v" style="color:'+c.color+'">'+c.label+'</div><div class="k">'+k+' · '+(u ? u.up+'/'+u.all : '—')+'</div></div>'; }).join('');
   const days = (det && det.days) || [];
   const strip = days.map(dd => { const v = dd.all ? dd.up/dd.all : null; let bg, border = '1px solid transparent';
@@ -620,23 +640,25 @@ function renderDetail(D){
   const kv = rows => rows.map(r => '<span class="k">'+esc(r.k)+'</span><span class="v" style="color:'+r.color+'">'+esc(r.v)+'</span>').join('');
 
   const log = det ? (det.kidsLog || []) : (g.kids ? [{at:null, kids:g.kids}] : []);
-  const ota = log.map((e, n) => { const k = e.kids || {}, isCur = k.hash === D.curHash.best, kOk = kel(k) === D.curKel;
+  const ota = log.map((e, n) => { const k = e.kids || {}, isCur = !!D.ref && k.hash === D.ref.hash, kOk = !!D.ref && kel(k) === D.ref.kel;
     // the oldest entry is our first read of the desk, so its arrival time is unknown
     const baseline = !!det && n === log.length-1;
     const seen = !e.at ? '—' : baseline ? ts(e.at)+' UTC <span style="color:rgba(247,241,210,.55)">· baseline, first read by us</span>'
       : ts(e.at)+' UTC <span style="color:rgba(247,241,210,.55)">· lag '+(k.date ? dur(e.at-k.date) : '—')+'</span>';
-    const f = D.first[k.hash]; let net, netColor = C;
-    if(!f) net = '—';
-    else if(f.ship === ship || k.date <= f.date){ net = 'first on network with this hash'; netColor = G; }
-    else { net = '+'+dur(k.date-f.date)+' after '+f.ship; netColor = (k.date-f.date) > 2*DAY ? Y : C; }
+    // commit-date lag behind ~zod's commit of the same hash
+    const zd = D.zodLog[k.hash]; let net, netColor = C;
+    if(ship === '~zod') { net = 'canonical source'; netColor = G; }
+    else if(zd == null) net = '~zod has not served this hash since we started';
+    else if(k.date <= zd){ net = 'committed before ~zod'; netColor = G; }
+    else { net = '+'+dur(k.date-zd)+' after ~zod'; netColor = (k.date-zd) > 2*DAY ? Y : C; }
     const color = n === 0 ? (isCur && kOk ? G : Y) : 'rgba(247,241,210,.6)';
-    const tag = n === 0 ? (isCur && kOk ? 'CURRENT' : 'BEHIND') : 'SUPERSEDED';
+    const tag = n === 0 ? (isCur && kOk ? 'MATCHES ~ZOD' : D.ref ? 'BEHIND ~ZOD' : 'NO REFERENCE') : 'SUPERSEDED';
     return '<div class="ota"><div class="dot"><i style="border-color:'+color+';background:'+(n === 0 ? color : 'transparent')+'"></i></div><div style="flex:1;min-width:0">'+
       '<div class="top"><span class="h" style="color:'+color+'">'+esc(k.hash || '—')+'</span><span class="kl" style="color:'+(kOk ? 'rgba(247,241,210,.7)' : Y)+'">'+esc(kelLabel(k))+'</span>'+
       '<span class="tg" style="color:'+color+';border-color:'+color+'">'+tag+'</span></div>'+
       '<div class="meta"><span class="k">committed</span><span>'+ts(k.date)+' UTC</span>'+
       '<span class="k">seen by us</span><span>'+seen+'</span>'+
-      '<span class="k">vs network</span><span style="color:'+netColor+'">'+esc(net)+'</span></div></div></div>'; }).join('');
+      '<span class="k">vs ~zod</span><span style="color:'+netColor+'">'+esc(net)+'</span></div></div></div>'; }).join('');
 
   const c = g.chain;
   const keys = c ? [
@@ -692,7 +714,7 @@ document.addEventListener('click', e => {
   const sh = t.closest('[data-ship]');
   if(sh && !t.closest('.drawer')){ openDetail(sh.dataset.ship); return; }
 });
-const KIND_COLOR = {current:G, behind:Y, down:R, unkeyed:R};
+const KIND_COLOR = {current:G, behind:Y, down:R, unkeyed:R, unscored:C};
 $('grid').addEventListener('mouseover', e => {
   const c = e.target.closest('.cell'); if(!c || c.contains(e.relatedTarget)) return;
   const sg = c.querySelector('.sg');
@@ -721,8 +743,8 @@ window.addEventListener('keydown', e => {
 const unlock = () => { if(S.sound) audio(); };
 window.addEventListener('pointerdown', unlock); window.addEventListener('keydown', unlock);
 
-load(); loadEvents();
-setInterval(() => { load(); loadEvents(); }, 60000);
+load(); loadEvents(); loadZod();
+setInterval(() => { load(); loadEvents(); loadZod(); }, 60000);
 setInterval(() => { S.now = Date.now(); render(); }, 30000);
 </script>
 </body>

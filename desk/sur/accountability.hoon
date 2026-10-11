@@ -5,7 +5,8 @@
 ::
 ::    .dominion is %jael when the %azimuth agent had no point for the
 ::    galaxy and we read life and rift from Jael instead; .owner and
-::    .management are then 0x0.
+::    .management are then 0x0 and mean nothing.  Otherwise 0x0 is a
+::    real unset address.
 ::
 +$  chain
   $:  life=@ud
@@ -47,16 +48,23 @@
 +$  galaxy
   $:  chain=(unit chain)
       chain-log=(list [at=@da =chain])      ::  changes seen, newest first
-      contact=(unit @da)                    ::  Ames last-contact
+      contact=(unit @da)                    ::  Ames last-contact; Ames
+                                            ::  sets it on first send, so
+                                            ::  it is not scored
       heard=(unit @da)                      ::  last answer to any probe
-      up=?                                  ::  answered in the last round
-      since=(unit @da)                      ::  when .up last changed
+      up=?                                  ::  answered in the last
+                                            ::  scored round
+      since=(unit @da)                      ::  when .up last changed, or
+                                            ::  first scored; ~ = unscored
       days=(map @da tally)                  ::  keyed by UTC midnight
       kids=(unit kids)
       kids-log=(list [at=@da =kids])        ::  revisions seen, newest first
       draft=(unit draft)
-      missing=(unit @da)                    ::  when %kids last read as empty
-      wait=(map probe @da)                  ::  in flight, by send time
+      missing=(unit @da)                    ::  when %kids last read as
+                                            ::  empty or malformed
+      wait=(map probe @da)                  ::  open requests, by send
+                                            ::  time; %w is a standing
+                                            ::  watch for the next commit
   ==
 ::  +event: a change we observed, stamped with when we saw it
 ::
@@ -80,7 +88,9 @@
 +$  action
   $%  [%interval t=@dr]                     ::  time between rounds
       [%round ~]                            ::  run a round now
-      [%reset who=(unit ship)]              ::  drop waits; ~ for all
+      [%reset who=(unit ship)]              ::  drop probes and draft,
+                                            ::  cancel the %kids watch;
+                                            ::  ~ for all galaxies
   ==
 ::  +point: a copy of +point:naive, to read the %azimuth agent
 ::

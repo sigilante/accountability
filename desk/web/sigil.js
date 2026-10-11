@@ -1,8 +1,18 @@
-/* @urbit/sigil-js 2.2.0, dist/core.esm.js (MIT, https://github.com/urbit/sigil-js).
- * Vendored for %accountability: the 'invariant' import is inlined and
- * the default export is exposed as window.sigil. Otherwise unchanged. */
+/* @urbit/sigil-js 2.2.0, dist/core.esm.js
+ * Copyright (c) 2019 Tlon. MIT License: https://github.com/urbit/sigil-js
+ * (full text in LICENSES.md at the repository root).
+ *
+ * Vendored for %accountability with four changes and no others:
+ * - wrapped in an IIFE;
+ * - the 'invariant' package import replaced by a three-line function;
+ * - a stub 'process' so the library's NODE_ENV checks run in a browser
+ *   and keep their error messages;
+ * - the default export exposed as window.sigil.
+ * The library's own error strings name both @urbit and @tlon; they are
+ * the same package. */
 (function(){
-function invariant(c,m){ if(!c) throw new Error(m); }
+function invariant(c,m){ if(!c) throw new Error(m || 'sigil-js: invalid input'); }
+var process = {env: {NODE_ENV: 'development'}};
 
 var index$1 = {
   bac: "<g transform='@TR'><path d='M0 0C0 70.6925 57.3075 128 128 128V0H0Z' fill='@FG' stroke='@BG' stroke-width='@SW'/><line x1='-0.0029152' x2='127.983' y2='127.986' stroke='@BG' stroke-linecap='square' fill='none' stroke-width='@SW'/><circle cx='64' cy='64' r='11.5' fill='@FG' stroke='@FG' stroke-width='@SW'/><circle cx='64' cy='64' r='9' fill='@BG' stroke='@BG' stroke-width='@SW'/><circle cx='16' cy='112' r='11.5' fill='@BG' stroke='@BG' stroke-width='@SW'/><circle cx='16' cy='112' r='9' fill='@FG' stroke='@FG' stroke-width='@SW'/></g>",

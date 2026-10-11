@@ -1,4 +1,7 @@
-::  /lib/accountability: uptime arithmetic and JSON
+::  /lib/accountability: reachability tallies and JSON
+::
+::    JSON times are Unix milliseconds; .interval is seconds; addresses
+::    are 0x and 40 lowercase hex digits; hashes are @uv text (0v...).
 ::
 /-  *accountability
 |%
@@ -8,7 +11,8 @@
   |=  t=@da
   ^-  @da
   (sub t (mod t ~d1))
-::  +uptime: rounds answered over the last .n UTC days, today included
+::  +uptime: rounds answered over the last .n UTC calendar days, today
+::  included.  n=1 is today only, not the trailing 24 hours.
 ::
 ++  uptime
   |=  [days=(map @da tally) now=@da n=@ud]
