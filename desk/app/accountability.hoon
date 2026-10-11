@@ -238,7 +238,7 @@
   =/  key  [site ext]:line
   ?+    key  not-found:gen:server
       [[%apps %accountability %galaxies ~] [~ %json]]
-    (json-out (galaxies:to-json now.bowl our.bowl interval galaxies))
+    (json-out (galaxies:to-json now.bowl our.bowl interval last galaxies))
   ::
       [[%apps %accountability %galaxy @ ~] [~ %json]]
     =/  who  (slaw %p (snag 3 site.line))

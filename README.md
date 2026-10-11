@@ -92,11 +92,13 @@ All routes are GET and need no login. JSON responses send `access-control-allow-
 | route | returns |
 |---|---|
 | `/apps/accountability` | the dashboard |
-| `/apps/accountability/galaxies.json` | `{now, observer, interval, galaxies: [Summary]}` |
+| `/apps/accountability/galaxies.json` | `{now, round, observer, interval, galaxies: [Summary]}` |
 | `/apps/accountability/galaxy/~zod.json` | one `Summary` plus `days`, `kidsLog`, `chainLog`, `events` |
 | `/apps/accountability/events.json` | `[Event]`, newest first |
 
 `events.json` takes `ship=~zod`, `since=<ms>`, `before=<ms>`, and `limit=<n>` (default 500). `since` and `before` are exclusive. Pass the newest `at` you hold as `since` to poll for new events. The agent ignores filters it cannot parse.
+
+`now` is the time of the request; `round` is when the last round started, or null before the first.
 
 **Units.** Times are Unix milliseconds, `interval` is seconds, addresses are `0x` plus 40 hex digits, and hashes are `@uv` text (`0v…`). A hash of `0v0` means the read was refused or malformed.
 

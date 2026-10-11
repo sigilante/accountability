@@ -29,10 +29,11 @@
   ::  +galaxies: every galaxy, without history
   ::
   ++  galaxies
-    |=  [now=@da our=@p interval=@dr gals=(map @p galaxy)]
+    |=  [now=@da our=@p interval=@dr last=(unit @da) gals=(map @p galaxy)]
     ^-  json
     %-  pairs
     :~  now+(time now)
+        round+(en-time last)
         observer+s+(scot %p our)
         interval+(numb (div interval ~s1))
         :-  %galaxies
