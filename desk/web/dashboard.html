@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>%accountability</title>
+<style>
+@font-face{
+  font-family:'Urbit Sans';
+  src:url('/apps/accountability/fnt/urbit-sans.woff2') format('woff2');
+  font-weight:100 900;font-display:swap;
+}
+@font-face{
+  font-family:'Space Mono';
+  src:url('/apps/accountability/fnt/space-mono.ttf') format('truetype');
+  font-weight:400;font-display:swap;
+}
+:root{
+  --ground:#2f3019;
+  --ground-hi:#36371e;
+  --ink:#f7f1d2;
+  --green:#5dbf8d;
+  --gold:#fed107;
+  --red:#f05826;
+  --mono:'Space Mono',ui-monospace,monospace;
+  --sans:'Urbit Sans',system-ui,sans-serif;
+  --row-h:38px;
+}
+*{box-sizing:border-box}
+html{background:var(--ground)}
+body{
+  margin:0;min-height:100vh;color:var(--ink);font-family:var(--sans);
+  padding:clamp(18px,3vw,40px);
+  background-color:var(--ground);
+  background-image:
+    linear-gradient(rgba(247,241,210,.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(247,241,210,.05) 1px,transparent 1px),
+    linear-gradient(rgba(247,241,210,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(247,241,210,.025) 1px,transparent 1px);
+  background-size:154px 154px,154px 154px,28px 28px,28px 28px;
+}
+a{color:var(--gold);text-decoration:none;border-bottom:1px dotted var(--gold)}
+a:hover{color:var(--ink);border-bottom-color:var(--ink)}
+input{font-family:var(--mono);color:var(--ink);background:transparent;border:none;outline:none}
+input::placeholder{color:rgba(247,241,210,.35)}
+button{font:inherit}
+::selection{background:var(--gold);color:var(--ground)}
+@keyframes emblink{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes acdrawer{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes acfresh{from{background:rgba(254,209,7,.16)}to{background:transparent}}
+
+.wrap{max-width:1240px;margin:0 auto}
+.mono{font-family:var(--mono)}
+.cap{font-family:var(--sans);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(247,241,210,.55)}
+.dim{color:rgba(247,241,210,.4)}
+.empty{font-family:var(--mono);font-size:11px;color:rgba(247,241,210,.4);padding:6px 0}
+
+/* ---------- header ---------- */
+header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:20px;
+  padding-bottom:16px;border-bottom:1px solid rgba(247,241,210,.28);margin-bottom:6px}
+.mark{font-family:var(--mono);font-size:30px;letter-spacing:-.01em}
+.mark b{font-weight:400;color:var(--gold)}
+.ver{font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:.1em}
+.sub{font-family:var(--sans);letter-spacing:.22em;text-transform:uppercase;font-size:11px;color:rgba(247,241,210,.6);margin-top:6px}
+.hright{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.btn-o{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;background:transparent;border:1px solid rgba(247,241,210,.3);
+  color:var(--ink);padding:4px 9px;cursor:pointer;white-space:nowrap}
+.btn-o:hover{border-color:var(--gold);color:var(--gold)}
+.feed{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;letter-spacing:.08em}
+.feed i{width:8px;height:8px;border-radius:50%;animation:emblink 1.5s infinite}
+.chip{display:flex;align-items:center;gap:10px;border:1px solid rgba(247,241,210,.4);padding:6px 12px 6px 8px}
+.chip .who{font-family:var(--mono);font-size:13px;line-height:1.1}
+.chip .role{font-family:var(--sans);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:rgba(247,241,210,.55)}
+
+/* ---------- panel ---------- */
+.panel{position:relative;border:1px solid rgba(247,241,210,.34);padding:20px 22px 22px;background:rgba(247,241,210,.014);margin-top:22px}
+.panel>.tk{position:absolute;width:13px;height:13px;border:0 solid var(--gold)}
+.panel>.tl{top:-1px;left:-1px;border-top-width:2px;border-left-width:2px}
+.panel>.tr{top:-1px;right:-1px;border-top-width:2px;border-right-width:2px}
+.panel>.bl{bottom:-1px;left:-1px;border-bottom-width:2px;border-left-width:2px}
+.panel>.br{bottom:-1px;right:-1px;border-bottom-width:2px;border-right-width:2px}
+.ph{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;
+  padding-bottom:10px;border-bottom:1px solid rgba(247,241,210,.22);margin-bottom:16px}
+.ph h2{margin:0;font-family:var(--sans);font-weight:500;font-size:12.5px;letter-spacing:.24em;text-transform:uppercase}
+.ph .tag{font-family:var(--mono);font-size:10px;color:var(--gold)}
+
+/* ---------- sigil frame ---------- */
+.sig{position:relative;flex:none;border:1px solid rgba(247,241,210,.6);display:grid;place-items:center;overflow:visible}
+.sig svg{display:block}
+.sig::before,.sig::after{content:'';position:absolute;width:4px;height:4px;border:0 solid var(--gold)}
+.sig::before{top:-1px;left:-1px;border-top-width:1px;border-left-width:1px}
+.sig::after{bottom:-1px;right:-1px;border-bottom-width:1px;border-right-width:1px}
+.sig .ph-mark{width:44%;height:44%;transform:rotate(45deg);border:1px solid rgba(247,241,210,.7)}
+
+/* ---------- network ---------- */
+.net{display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start}
+.net-l{flex:1 1 560px;min-width:300px}
+.net-r{flex:1 1 300px;min-width:270px;border-left:1px dashed rgba(247,241,210,.22);padding-left:26px;display:flex;flex-direction:column;gap:22px}
+.grid{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px;container-type:inline-size}
+/* Names are twice the design's clamp(7px,.75vw,9.5px), unless that won't fit:
+   three Space Mono glyphs span about 1.8em, so 0.4 of the cell width is the
+   most that leaves a margin. */
+.cell{aspect-ratio:1;display:grid;place-items:center;cursor:pointer;font-family:var(--mono);
+  font-size:clamp(7px,.75vw,9.5px);
+  font-size:max(7px,min(clamp(14px,1.5vw,19px),calc((100cqw - 45px) / 16 * .4)))}
+.cell:hover{outline:1px solid var(--gold);outline-offset:1px}
+/* on hover the name gives way to the galaxy's sigil, drawn in its status color */
+.cell .sg{display:none;width:100%;height:100%}
+.cell .sg svg{width:100%;height:100%}
+.cell:hover .sg{display:block}
+.cell:hover .nm{display:none}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:16px;padding-top:12px;border-top:1px dashed rgba(247,241,210,.22);
+  font-family:var(--mono);font-size:10px;color:rgba(247,241,210,.75)}
+.legend span{display:flex;align-items:center;gap:7px}
+.legend i{width:11px;height:11px}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:rgba(247,241,210,.16);border:1px solid rgba(247,241,210,.16)}
+.stat{background:var(--ground);padding:12px 14px;cursor:pointer}
+.stat:hover{background:var(--ground-hi)}
+.stat .n{font-family:var(--mono);font-size:32px;line-height:1}
+.stat .l{font-family:var(--sans);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(247,241,210,.6);margin-top:6px}
+.kbar{display:grid;grid-template-columns:86px minmax(0,1fr) 34px;gap:10px;align-items:center;margin-bottom:8px;font-family:var(--mono);font-size:11.5px}
+.kbar .bar{height:9px;border:1px solid rgba(247,241,210,.22)}
+.kbar .bar div{height:100%}
+.note{font-family:var(--mono);font-size:9.5px;color:rgba(247,241,210,.5);margin-top:4px}
+
+/* ---------- events ---------- */
+.evlist{max-height:380px;overflow-y:auto}
+.ev{display:grid;grid-template-columns:118px 20px 64px 92px minmax(0,1fr);gap:12px;align-items:center;padding:7px 4px;
+  border-bottom:1px solid rgba(247,241,210,.1);font-family:var(--mono);font-size:11px;cursor:pointer}
+.ev:hover{background:rgba(254,209,7,.06)}
+.ev.fresh{animation:acfresh 4s ease-out}
+.ev .t{color:rgba(247,241,210,.6);font-size:10.5px}
+.badge{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;border:1px solid;padding:1px 6px;justify-self:start;white-space:nowrap}
+.ev .what{color:rgba(247,241,210,.85);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.more{margin-top:12px}
+@media (max-width:640px){
+  .ev{grid-template-columns:20px 56px 1fr;row-gap:2px}
+  .ev .t{grid-column:1 / -1;order:-1}
+  .ev .what{grid-column:1 / -1;white-space:normal}
+  .ev .badge{grid-column:3}
+}
+
+/* ---------- ledger ---------- */
+.ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:20px}
+.seg{display:flex;flex-wrap:wrap;gap:1px;background:rgba(247,241,210,.4);border:1px solid rgba(247,241,210,.4)}
+.seg button{display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap;flex:none;font-family:var(--sans);font-size:11px;
+  letter-spacing:.1em;text-transform:uppercase;padding:6px 13px;cursor:pointer;border:none;background:var(--ground);color:rgba(247,241,210,.7)}
+.seg button.on{background:var(--ink);color:var(--ground)}
+.seg button span{font-family:var(--mono);font-size:10px;opacity:.75}
+.search{display:flex;align-items:center;border-bottom:1px solid rgba(247,241,210,.45);padding:2px 4px;min-width:170px}
+.search span{font-family:var(--mono);color:rgba(247,241,210,.4);margin-right:2px}
+.search input{width:140px;font-size:13px}
+.hsearch{align-self:stretch;border:1px solid rgba(247,241,210,.4);padding:6px 10px}
+.hsearch input{width:120px}
+.hsearch .n{font-family:var(--mono);font-size:10px;color:rgba(247,241,210,.55);margin-left:6px;min-width:4ch;text-align:right}
+.hsearch:focus-within{border-color:var(--gold)}
+.tbl{overflow-x:auto}
+.tbl>div{min-width:900px}
+.cols{display:grid;grid-template-columns:24px minmax(70px,1fr) 150px 96px 96px 48px 48px 62px 104px 96px;gap:12px}
+.thead{align-items:end;padding:0 6px 8px;border-bottom:1px solid rgba(247,241,210,.28);font-family:var(--sans);font-size:9.5px;
+  letter-spacing:.14em;text-transform:uppercase;color:rgba(247,241,210,.6)}
+.thead span[data-sort]{cursor:pointer}
+.thead span[data-sort]:hover{color:var(--gold)}
+.row{align-items:center;padding:0 6px;height:var(--row-h);border-bottom:1px solid rgba(247,241,210,.1);cursor:pointer;
+  font-family:var(--mono);font-size:11.5px}
+.row:hover{background:rgba(254,209,7,.06)}
+.row .r{text-align:right}
+.st{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.st .for{font-size:10.5px;color:rgba(247,241,210,.7)}
+.up{display:flex;align-items:center;gap:7px}
+.up .bar{width:34px;height:6px;border:1px solid rgba(247,241,210,.22);flex:none}
+.up .bar span{display:block;height:100%}
+.up .lab{font-size:10.5px}
+.behind{font-size:8.5px;letter-spacing:.1em;border:1px solid var(--gold);color:var(--gold);padding:0 4px}
+
+footer{text-align:center;margin-top:28px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:rgba(247,241,210,.4);line-height:1.8}
+
+/* ---------- drawer ---------- */
+.scrim{position:fixed;inset:0;background:rgba(20,21,10,.62);z-index:40}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(600px,100%);z-index:41;background:var(--ground);
+  border-left:1px solid rgba(247,241,210,.34);overflow-y:auto;animation:acdrawer .22s ease-out;box-shadow:0 6px 22px rgba(0,0,0,.4)}
+.drawer>.tk{position:absolute;left:-1px;width:13px;height:13px;border:0 solid var(--gold);border-left-width:2px}
+.drawer>.tk.t{top:0;border-top-width:2px}
+.drawer>.tk.b{bottom:0;border-bottom-width:2px}
+.dbody{padding:22px 24px 30px}
+.dhead{display:flex;align-items:center;gap:14px;padding-bottom:14px;border-bottom:1px solid rgba(247,241,210,.22)}
+.dhead .nm{font-family:var(--mono);font-size:22px;line-height:1.1}
+.x{font-family:var(--mono);font-size:14px;background:transparent;border:1px solid rgba(247,241,210,.3);color:rgba(247,241,210,.7);
+  width:30px;height:30px;cursor:pointer;flex:none}
+.x:hover{border-color:var(--gold);color:var(--gold)}
+.flags{border:1.5px solid var(--red);padding:11px 14px;margin-top:16px}
+.flag{display:flex;align-items:baseline;gap:9px;font-size:12.5px;line-height:1.6}
+.flag i{width:7px;height:7px;flex:none}
+.flag b{font-family:var(--sans);letter-spacing:.14em;text-transform:uppercase;font-size:11px;font-weight:600}
+.flag span{color:rgba(247,241,210,.85)}
+.sec{margin:24px 0 10px}
+.up3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:rgba(247,241,210,.16);border:1px solid rgba(247,241,210,.16)}
+.up3 div{background:var(--ground);padding:10px 12px}
+.up3 .v{font-family:var(--mono);font-size:20px}
+.up3 .k{font-family:var(--mono);font-size:9.5px;color:rgba(247,241,210,.55);margin-top:3px}
+.strip{display:flex;gap:2px;height:30px;align-items:stretch;margin-top:14px}
+.strip div{flex:1}
+.stripcap{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:rgba(247,241,210,.5);margin-top:5px}
+.kv{display:grid;grid-template-columns:110px minmax(0,1fr);gap:6px 12px;font-family:var(--mono);font-size:11px}
+.kv .k{color:rgba(247,241,210,.55)}
+.kv .v{word-break:break-all}
+.ota{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(247,241,210,.12)}
+.ota .dot{width:12px;flex:none;display:flex;flex-direction:column;align-items:center;padding-top:4px}
+.ota .dot i{width:9px;height:9px;border:1.5px solid}
+.ota .top{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;font-family:var(--mono)}
+.ota .h{font-size:12px}
+.ota .kl{font-size:10.5px}
+.ota .tg{font-size:8.5px;letter-spacing:.1em;border:1px solid;padding:0 5px}
+.ota .meta{display:grid;grid-template-columns:96px minmax(0,1fr);gap:3px 10px;margin-top:6px;font-family:var(--mono);font-size:10.5px}
+.ota .meta .k{color:rgba(247,241,210,.5)}
+.chg{display:grid;grid-template-columns:130px minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px solid rgba(247,241,210,.12);
+  font-family:var(--mono);font-size:10.5px}
+.chg .t{color:rgba(247,241,210,.6)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div style="display:flex;align-items:baseline;gap:10px">
+        <span class="mark"><b>%</b>accountability</span>
+        <span class="ver">v1</span>
+      </div>
+      <div class="sub">galaxy operator explorer</div>
+    </div>
+    <div class="hright">
+      <button class="btn-o" id="sound"></button>
+      <div class="feed" id="feed"><i></i><span>LOADING</span></div>
+      <div class="chip" id="observer"></div>
+      <label class="search hsearch" title="filters the grid and the ledger · enter opens the first match">
+        <span>~</span><input id="hq" placeholder="search galaxies" autocomplete="off" spellcheck="false"><span class="n" id="hq-n"></span>
+      </label>
+    </div>
+  </header>
+
+  <section class="panel">
+    <i class="tk tl"></i><i class="tk tr"></i><i class="tk bl"></i><i class="tk br"></i>
+    <div class="ph"><h2>Network · All Galaxies</h2><span class="tag" id="net-tag">NET-01</span></div>
+    <div class="net">
+      <div class="net-l">
+        <div class="grid" id="grid"></div>
+        <div class="legend">
+          <span><i style="border:1px solid #5dbf8d;background:rgba(93,191,141,.16)"></i>up · current</span>
+          <span><i style="border:1px solid #fed107;background:rgba(254,209,7,.16)"></i>up · behind</span>
+          <span><i style="border:1px solid rgba(240,88,38,.6)"></i>down</span>
+          <span><i style="border:2px solid #f05826;background:repeating-linear-gradient(45deg,transparent 0 2px,rgba(240,88,38,.45) 2px 3px)"></i>unkeyed</span>
+        </div>
+      </div>
+      <div class="net-r">
+        <div class="stats" id="stats"></div>
+        <div>
+          <div class="cap" style="margin-bottom:10px">kelvin · galaxies serving each</div>
+          <div id="kelvins"></div>
+          <div class="note">majority kelvin is current; any other is flagged behind.</div>
+        </div>
+        <div>
+          <div class="cap" style="margin-bottom:8px">current %kids hash</div>
+          <div class="mono" id="cur-hash" style="font-size:11px;color:#5dbf8d;word-break:break-all;line-height:1.5">—</div>
+          <div class="note" id="cur-cap" style="margin-top:5px"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <i class="tk tl"></i><i class="tk tr"></i><i class="tk bl"></i><i class="tk br"></i>
+    <div class="ph"><h2>Events · Observed</h2><span class="tag" id="ev-tag">EVT-02</span></div>
+    <div class="evlist" id="events"></div>
+    <button class="btn-o more" id="ev-more" hidden>older events</button>
+  </section>
+
+  <section class="panel">
+    <i class="tk tl"></i><i class="tk tr"></i><i class="tk bl"></i><i class="tk br"></i>
+    <div class="ph"><h2>Galaxies · Ledger</h2><span class="tag" id="gal-tag">GAL-03</span></div>
+    <div class="ctrl">
+      <span class="cap" style="font-size:11px;color:rgba(247,241,210,.6);white-space:nowrap">show →</span>
+      <div class="seg" id="filters"></div>
+      <div style="flex:1"></div>
+      <label class="search"><span>~</span><input id="q" placeholder="filter by name" autocomplete="off"></label>
+    </div>
+    <div class="tbl"><div>
+      <div class="cols thead" id="thead"></div>
+      <div id="rows"></div>
+    </div></div>
+  </section>
+
+  <footer>
+    interval length: <span id="interval">10 min</span><br>
+    /apps/accountability/galaxies.json · galaxy/~ship.json · events.json · public · probes keys, liveness, %kids hash, kelvin
+  </footer>
+</div>
+
+<div id="detail"></div>
+
+<script src="/apps/accountability/sigil.js"></script>
+<script>
+'use strict';
+const API = '/apps/accountability';
+const G = '#5dbf8d', Y = '#fed107', R = '#f05826', C = '#f7f1d2', DIM = 'rgba(247,241,210,.45)', GROUND = '#2f3019';
+const DAY = 864e5, MIN = 6e4;
+
+const S = {
+  data: null, live: false, err: false,
+  sort: {k: 'ship', d: 1}, filter: 'all', q: '', sel: null,
+  details: {}, events: [], evOld: false, fresh: new Set(),
+  sound: pref('sound', true), now: Date.now(),
+};
+
+// ---------- utilities ----------
+function pref(k, d){ try{ const v = localStorage.getItem('acc.'+k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } }
+function save(k, v){ try{ localStorage.setItem('acc.'+k, JSON.stringify(v)); }catch(e){} }
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+const $ = id => document.getElementById(id);
+
+function dur(ms){ if(ms == null || isNaN(ms)) return '—'; ms = Math.max(0, ms); const m = Math.floor(ms/MIN);
+  if(m < 60) return m+'m'; const h = Math.floor(m/60); if(h < 48) return h+'h '+(m%60)+'m'; const d = Math.floor(h/24); return d+'d '+(h%24)+'h'; }
+function ts(t){ if(!t) return '—'; const d = new Date(t), p = n => String(n).padStart(2,'0');
+  return d.getUTCFullYear()+'-'+p(d.getUTCMonth()+1)+'-'+p(d.getUTCDate())+' '+p(d.getUTCHours())+':'+p(d.getUTCMinutes()); }
+function day(t){ return t ? ts(t).slice(0,10) : '—'; }
+function shortHash(h){ return h ? '…'+h.replace(/\./g,'').slice(-6) : '—'; }
+function shortAddr(a){ return a ? a.slice(0,10)+'…' : '—'; }
+function kel(k){ return k && k.kelvin && k.kelvin.length ? k.kelvin.map(x => x.num).join('/') : null; }
+function kelLabel(k){ return k && k.kelvin && k.kelvin.length ? k.kelvin.map(x => x.lal+' '+x.num).join(' · ') : '—'; }
+function ratio(u){ return u && u.all ? u.up/u.all : null; }
+function upCell(u){ const v = ratio(u); if(v == null) return {pct:0, color:DIM, label:'—'};
+  const color = v >= .95 ? G : v >= .5 ? Y : R;
+  return {pct:Math.round(v*100), color, label:(v*100).toFixed(v === 1 || v === 0 ? 0 : 1)+'%'}; }
+function mode(arr){ const c = {}; arr.forEach(x => { if(x != null) c[x] = (c[x]||0)+1; });
+  let best = null, n = 0; Object.keys(c).forEach(k => { if(c[k] > n){ n = c[k]; best = k; } }); return {best, n, counts:c}; }
+
+// ---------- names and sigils ----------
+// sigil-js draws galaxies, stars, and planets only; moons and comets get the
+// design's placeholder mark instead of a sigil that belongs to another point.
+function syllables(p){ return p.replace(/^~/,'').split(/-+/).join('').length/3; }
+function clan(p){ const n = syllables(p); return n === 1 ? 'galaxy' : n === 2 ? 'star' : n <= 4 ? 'planet' : n <= 8 ? 'moon' : 'comet'; }
+function cite(p){ if(syllables(p) <= 4) return p; const w = p.replace(/^~/,'').split(/-+/); return '~'+w[0]+'_'+w[w.length-1]; }
+const sigCache = new Map();
+function drawSigil(ship, size, fg){
+  const key = ship+'|'+size+'|'+fg;
+  if(sigCache.has(key)) return sigCache.get(key);
+  let svg = '<i class="ph-mark"></i>';
+  if(window.sigil && ['galaxy','star','planet'].includes(clan(ship))){
+    try{ svg = window.sigil({point:ship, size, foreground:fg, background:GROUND, detail:size < 48 ? 'none' : 'default', space:'none'}); }catch(e){}
+  }
+  sigCache.set(key, svg);
+  return svg;
+}
+function sigBox(ship, px, fg, inner){ return '<div class="sig" style="width:'+px+'px;height:'+px+'px">'+drawSigil(ship, inner, fg)+'</div>'; }
+
+// ---------- sound ----------
+let ac = null, out = null, lastTone = 0;
+function audio(){ try{ if(!ac){ const A = window.AudioContext || window.webkitAudioContext; if(!A) return null;
+    ac = new A(); out = ac.createGain(); out.gain.value = .22; out.connect(ac.destination); }
+  if(ac.state === 'suspended') ac.resume(); return ac; }catch(e){ return null; } }
+function tone(type, f, at, d, vol, f2){ const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, at);
+  if(f2) o.frequency.exponentialRampToValueAtTime(f2, at+d);
+  g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(vol, at+.004); g.gain.exponentialRampToValueAtTime(.0001, at+d);
+  o.connect(g); g.connect(out); o.start(at); o.stop(at+d+.02); }
+function hoverSound(kind, i){ if(!S.sound) return; const a = audio(); if(!a || a.state !== 'running') return;
+  const t = a.currentTime; if(t-lastTone < .035) return; lastTone = t;
+  const col = i%16, deg = [0,2,4,7,9][col%5]+12*Math.floor(col/5), f = 523.25*Math.pow(2, deg/12);
+  if(kind === 'current'){ tone('triangle',f,t,.16,.22); tone('triangle',f*1.5,t+.035,.14,.14); tone('triangle',f*2,t+.07,.22,.1); tone('sine',f*4,t+.09,.18,.03); }
+  else if(kind === 'behind'){ tone('square',f,t,.12,.045); tone('square',f*1.059,t+.05,.14,.035); }
+  else if(kind === 'down'){ tone('triangle',f/4,t,.18,.2,f/5.6); }
+  else { tone('square',f/4,t,.05,.05); tone('square',f/4,t+.07,.05,.04); } }
+function popSound(){ if(!S.sound) return; const a = audio(); if(!a) return; const t = a.currentTime+.005;
+  tone('sine',900,t,.07,.35,110); tone('square',2400,t,.012,.05); }
+
+// ---------- data ----------
+async function getJSON(path){ const r = await fetch(API+path, {cache:'no-store'}); if(!r.ok) throw new Error(r.status); return r.json(); }
+
+async function load(){
+  try{
+    const j = await getJSON('/galaxies.json');
+    if(!j || !Array.isArray(j.galaxies)) throw new Error('shape');
+    S.data = j; S.live = true; S.err = false; S.now = Date.now();
+  }catch(e){ S.err = true; }
+  render();
+}
+
+async function loadEvents(){
+  try{
+    if(!S.events.length){
+      const evs = await getJSON('/events.json?limit=200');
+      S.events = evs; S.evOld = evs.length === 200;
+    }else{
+      const evs = await getJSON('/events.json?since='+S.events[0].at+'&limit=500');
+      if(evs.length){ evs.forEach(e => S.fresh.add(evKey(e))); S.events = evs.concat(S.events); }
+    }
+  }catch(e){}
+  renderEvents();
+}
+
+async function olderEvents(){
+  if(!S.events.length) return;
+  try{
+    const evs = await getJSON('/events.json?before='+S.events[S.events.length-1].at+'&limit=200');
+    S.events = S.events.concat(evs); S.evOld = evs.length === 200;
+  }catch(e){}
+  renderEvents();
+}
+
+async function openDetail(ship){
+  popSound();
+  S.sel = ship; render();
+  try{ S.details[ship] = await getJSON('/galaxy/'+ship+'.json'); }catch(e){}
+  if(S.sel === ship) render();
+}
+
+// ---------- derived ----------
+function derive(){
+  const data = S.data; if(!data) return null;
+  const gs = data.galaxies, now = S.now;
+  const resp = gs.filter(g => g.up && g.kids);
+  const curHash = mode(resp.map(g => g.kids.hash));
+  const kAll = mode(gs.filter(g => g.kids).map(g => kel(g.kids)));
+  const curKel = mode(resp.map(g => kel(g.kids))).best || kAll.best;
+  // earliest commit of each hash on the network, from summaries and loaded logs
+  const first = {};
+  const note = (k, ship) => { if(!k || !k.hash) return; const f = first[k.hash]; if(!f || k.date < f.date) first[k.hash] = {date:k.date, ship}; };
+  gs.forEach(g => note(g.kids, g.ship));
+  Object.values(S.details).forEach(d => (d.kidsLog || []).forEach(e => note(e.kids, d.ship)));
+  const info = gs.map((g, i) => {
+    const unkeyed = !g.chain || g.chain.life === 0;
+    const k = kel(g.kids);
+    const hashBehind = !!(g.kids && curHash.best && g.kids.hash !== curHash.best);
+    const kelBehind = !!(k && curKel && k !== curKel);
+    return {g, i, unkeyed, behind:hashBehind || kelBehind, hashBehind, kelBehind, kel:k};
+  });
+  return {gs, info, now, curHash, curKel, kAll, first, resp};
+}
+
+function match(x, f){ if(f === 'down') return !x.g.up; if(f === 'behind') return x.behind; if(f === 'unkeyed') return x.unkeyed; return true; }
+function sortKey(x, k){ const g = x.g, now = S.now;
+  switch(k){
+    case 'status': return g.since == null ? 0 : (g.up ? 1 : -1)*(now-g.since);
+    case 'w7': { const v = ratio(g.uptime && g.uptime.week); return v == null ? -1 : v; }
+    case 'm30': { const v = ratio(g.uptime && g.uptime.month); return v == null ? -1 : v; }
+    case 'life': return g.chain ? g.chain.life : -1;
+    case 'rift': return g.chain ? g.chain.rift : -1;
+    case 'kelvin': return x.kel ? parseInt(x.kel, 10) : 1e9;
+    case 'hash': return g.kids ? (x.behind ? 0 : 1) : 2;
+    case 'date': return g.kids ? g.kids.date : 0;
+    default: return x.i;
+  } }
+function statusOf(g, now){
+  if(g.up) return {label:'UP', color:G, for:g.since ? 'for '+dur(now-g.since) : '—'};
+  if(!g.heard) return {label:'DOWN', color:R, for:'never heard'};
+  return {label:'DOWN', color:R, for:g.since ? 'for '+dur(now-g.since) : '—'};
+}
+
+// ---------- events ----------
+function evKey(e){ return e.at+'|'+e.ship+'|'+e.type; }
+function evView(e, D){
+  switch(e.type){
+    case 'up':         return {label:'UP', color:G, what:'answering again · was down '+dur(e.at-e.since)};
+    case 'down':       return {label:'DOWN', color:R, what:'stopped answering · was up '+dur(e.at-e.since)+(e.last ? ' · last answer '+ts(e.last) : '')};
+    case 'breach':     return {label:'BREACH', color:R, what:'rift '+e.from+' → '+e.to};
+    case 'rekey':      return {label:'REKEY', color:G, what:'life '+e.from+' → '+e.to};
+    case 'owner':      return {label:'OWNER', color:Y, what:'owner '+shortAddr(e.from)+' → '+shortAddr(e.to)};
+    case 'management': return {label:'MGMT', color:Y, what:'management '+shortAddr(e.from)+' → '+shortAddr(e.to)};
+    case 'ota': {
+      const kf = kel(e.from), kt = kel(e.to);
+      const cur = D && D.curHash.best === e.to.hash;
+      return {label:'OTA', color:cur ? G : Y, what:shortHash(e.from.hash)+' → '+shortHash(e.to.hash)+(kf !== kt ? ' · kelvin '+(kf||'—')+' → '+(kt||'—') : '')+' · lag '+dur(e.at-e.to.date)};
+    }
+    case 'gap':        return {label:'GAP', color:DIM, what:'observer ran no rounds since '+ts(e.from)+' UTC · not scored'};
+    default:           return {label:String(e.type).toUpperCase(), color:DIM, what:''};
+  }
+}
+function evRow(e, D, withSigil){
+  const v = evView(e, D), mine = e.type === 'gap';
+  return '<div class="ev'+(S.fresh.has(evKey(e)) ? ' fresh' : '')+'"'+(mine ? '' : ' data-ship="'+esc(e.ship)+'"')+'>'+
+    '<span class="t">'+ts(e.at)+'</span>'+
+    (withSigil ? sigBox(e.ship, 20, mine ? DIM : Y, 16) : '<span></span>')+
+    '<span>'+esc(mine ? 'us' : e.ship)+'</span>'+
+    '<span class="badge" style="color:'+v.color+';border-color:'+v.color+'">'+v.label+'</span>'+
+    '<span class="what" title="'+esc(v.what)+'">'+esc(v.what)+'</span></div>';
+}
+function renderEvents(){
+  const D = derive();
+  $('ev-tag').textContent = 'EVT-02 / '+S.events.length+(S.evOld ? '+' : '')+' events';
+  $('events').innerHTML = S.events.length
+    ? S.events.map(e => evRow(e, D, true)).join('')
+    : '<div class="empty">no changes observed yet. events appear as galaxies go up or down, rekey, breach, transfer, or take an OTA.</div>';
+  $('ev-more').hidden = !S.evOld;
+  S.fresh.clear();
+}
+
+// ---------- render ----------
+function render(){
+  const D = derive();
+  renderHeader(D);
+  if(!D){ $('grid').innerHTML = '<div class="empty" style="grid-column:1/-1">'+(S.err ? 'galaxies.json unreachable.' : 'loading…')+'</div>'; return; }
+  renderNet(D); renderLedger(D); renderDetail(D);
+}
+
+function renderHeader(D){
+  const feed = !S.live ? (S.err ? {color:R, label:'OFFLINE · fetch failed'} : {color:Y, label:'LOADING'})
+    : S.err ? {color:R, label:'STALE · fetch failed'} : {color:G, label:'LIVE'};
+  $('feed').innerHTML = '<i style="background:'+feed.color+'"></i><span style="color:'+feed.color+'">'+feed.label+'</span>';
+  $('sound').textContent = S.sound ? '♪ sound on' : '♪ sound off';
+  $('sound').style.color = S.sound ? C : DIM;
+  if(!S.data) return;
+  $('interval').textContent = Math.round((S.data.interval || 600)/60)+' min';
+  // the full @p stays available on hover
+  const me = S.data.observer || '';
+  $('observer').title = me;
+  $('observer').innerHTML = me ? sigBox(me, 30, Y, 26)+'<div class="role">probing ship</div>' : '';
+}
+
+function renderNet(D){
+  const st = S, now = D.now, info = D.info;
+  const counts = {up:info.filter(x => x.g.up).length, down:info.filter(x => !x.g.up).length,
+    unkeyed:info.filter(x => x.unkeyed).length, behind:info.filter(x => x.behind).length};
+  $('net-tag').textContent = 'NET-01 / last round '+dur(Date.now()-(S.data.now || now))+' ago';
+  const q = st.q.trim().replace(/^~/,'').toLowerCase();
+  $('grid').innerHTML = info.map(x => {
+    const g = x.g; let bg, fg, border;
+    if(x.unkeyed){ bg = 'repeating-linear-gradient(45deg,transparent 0 3px,rgba(240,88,38,.4) 3px 4px)'; fg = R; border = '2px solid '+R; }
+    else if(g.up && x.behind){ bg = 'rgba(254,209,7,.16)'; fg = Y; border = '1px solid '+Y; }
+    else if(g.up){ bg = 'rgba(93,191,141,.16)'; fg = C; border = '1px solid '+G; }
+    else { bg = 'transparent'; fg = 'rgba(240,88,38,.85)'; border = '1px solid rgba(240,88,38,.5)'; }
+    const s = statusOf(g, now);
+    const kind = x.unkeyed ? 'unkeyed' : g.up ? (x.behind ? 'behind' : 'current') : 'down';
+    const vis = match(x, st.filter) && (!q || g.ship.indexOf(q) >= 0);
+    const title = g.ship+' · '+s.label.toLowerCase()+' '+s.for+(x.behind ? ' · behind' : '')+(x.unkeyed ? ' · unkeyed' : '');
+    return '<div class="cell" data-ship="'+esc(g.ship)+'" data-kind="'+kind+'" data-i="'+x.i+'" title="'+esc(title)+'" style="background:'+bg+';color:'+fg+';border:'+border+
+      ';box-shadow:'+(st.sel === g.ship ? '0 0 0 2px #fed107' : 'none')+';opacity:'+(vis ? 1 : .18)+'"><span class="nm">'+esc(g.ship.slice(1))+'</span><span class="sg"></span></div>';
+  }).join('');
+  const stats = [
+    {n:counts.up, label:'up', color:G, f:'all'},
+    {n:counts.down, label:'down', color:R, f:'down'},
+    {n:counts.unkeyed, label:'unkeyed', color:counts.unkeyed ? R : C, f:'unkeyed'},
+    {n:counts.behind, label:'behind on ota', color:Y, f:'behind'},
+  ];
+  $('stats').innerHTML = stats.map(s => '<div class="stat" data-filter="'+s.f+'"><div class="n" style="color:'+s.color+'">'+s.n+'</div><div class="l">'+s.label+'</div></div>').join('');
+  const kc = D.kAll.counts, kmax = Math.max(1, ...Object.values(kc));
+  $('kelvins').innerHTML = Object.keys(kc).sort((a, b) => kc[b]-kc[a]).map(k => { const color = k === D.curKel ? G : Y;
+    return '<div class="kbar"><span style="color:'+color+'">zuse '+esc(k)+'</span><div class="bar"><div style="width:'+Math.round(kc[k]/kmax*100)+'%;background:'+color+'"></div></div><span style="text-align:right">'+kc[k]+'</span></div>'; }).join('')
+    || '<div class="empty">no %kids read yet.</div>';
+  $('cur-hash').textContent = D.curHash.best || '—';
+  $('cur-cap').textContent = D.curHash.best ? D.curHash.n+' of '+D.resp.length+' responsive galaxies · majority, not hardcoded' : 'no responsive galaxy has reported %kids';
+}
+
+function renderLedger(D){
+  const st = S, now = D.now, info = D.info;
+  const counts = {down:info.filter(x => !x.g.up).length, behind:info.filter(x => x.behind).length,
+    unkeyed:info.filter(x => x.unkeyed).length};
+  const F = [['all','all',info.length],['down','down',counts.down],['behind','behind',counts.behind],['unkeyed','unkeyed',counts.unkeyed]];
+  $('filters').innerHTML = F.map(([k, label, n]) => '<button data-filter="'+k+'" class="'+(st.filter === k ? 'on' : '')+'">'+label+' <span>'+n+'</span></button>').join('');
+  const cols = [['',''],['ship','galaxy'],['status','status'],['w7','7d'],['m30','30d'],['life','life','r'],['rift','rift','r'],['kelvin','kelvin'],['hash','hash'],['date','committed']];
+  $('thead').innerHTML = cols.map(([k, label, cls]) => k ? '<span data-sort="'+k+'"'+(cls ? ' class="'+cls+'" style="text-align:right"' : '')+'>'+label+' '+(st.sort.k === k ? (st.sort.d > 0 ? '▲' : '▼') : '')+'</span>' : '<span></span>').join('');
+  const q = st.q.trim().replace(/^~/,'').toLowerCase();
+  const list = info.filter(x => match(x, st.filter) && (!q || x.g.ship.indexOf(q) >= 0))
+    .sort((a, b) => { const ka = sortKey(a, st.sort.k), kb = sortKey(b, st.sort.k); return (ka < kb ? -1 : ka > kb ? 1 : a.i-b.i)*st.sort.d; });
+  $('gal-tag').textContent = 'GAL-03 / '+list.length+' of '+info.length;
+  $('hq-n').textContent = q ? list.length+'/'+info.length : '';
+  $('rows').innerHTML = list.length ? list.map(x => {
+    const g = x.g, s = statusOf(g, now), c = g.chain;
+    const w7 = upCell(g.uptime && g.uptime.week), m30 = upCell(g.uptime && g.uptime.month);
+    const sigColor = x.unkeyed ? R : g.up ? Y : 'rgba(254,209,7,.35)';
+    const lifeColor = !c || c.life === 0 ? R : C;
+    const riftColor = c && c.rift > 0 ? R : 'rgba(247,241,210,.55)';
+    const kColor = x.kelBehind ? Y : x.kel ? C : DIM;
+    const hColor = x.hashBehind ? Y : g.kids ? 'rgba(247,241,210,.8)' : DIM;
+    const bar = u => '<span class="up"><span class="bar"><span style="width:'+u.pct+'%;background:'+u.color+'"></span></span><span class="lab" style="color:'+u.color+'">'+u.label+'</span></span>';
+    return '<div class="cols row" data-ship="'+esc(g.ship)+'" style="background:'+(st.sel === g.ship ? 'rgba(254,209,7,.08)' : 'transparent')+'">'+
+      sigBox(g.ship, 20, sigColor, 18)+
+      '<span style="font-size:12.5px">'+esc(g.ship)+'</span>'+
+      '<span class="st"><span class="badge" style="color:'+s.color+';border-color:'+s.color+'">'+s.label+'</span><span class="for">'+esc(s.for)+'</span></span>'+
+      bar(w7)+bar(m30)+
+      '<span class="r" style="color:'+lifeColor+'">'+(c ? c.life : '—')+'</span>'+
+      '<span class="r" style="color:'+riftColor+'">'+(c ? c.rift : '—')+'</span>'+
+      '<span style="color:'+kColor+'">'+esc(x.kel || '—')+'</span>'+
+      '<span style="display:flex;align-items:center;gap:6px;color:'+hColor+'"><span>'+esc(g.kids ? shortHash(g.kids.hash) : '—')+'</span>'+(x.behind ? '<span class="behind">BEHIND</span>' : '')+'</span>'+
+      '<span style="color:rgba(247,241,210,.75);font-size:10.5px">'+(g.kids ? day(g.kids.date) : '—')+'</span></div>';
+  }).join('') : '<div class="empty" style="padding:16px 6px">no galaxies match.</div>';
+}
+
+function renderDetail(D){
+  const ship = S.sel;
+  const x = ship && D.info.find(z => z.g.ship === ship);
+  if(!x){ $('detail').innerHTML = ''; return; }
+  const det = S.details[ship], g = x.g, now = D.now, st = statusOf(g, now);
+
+  const flags = [];
+  if(!g.up) flags.push({k:'down', v:g.heard ? 'last answered '+dur(now-g.heard)+' ago' : 'has never answered a probe', color:R});
+  if(x.unkeyed) flags.push({k:'unkeyed', v:g.chain ? 'life 0 — no networking keys on chain' : 'no chain record', color:R});
+  if(x.hashBehind) flags.push({k:'behind', v:'%kids '+shortHash(g.kids.hash)+' is not the network majority '+shortHash(D.curHash.best), color:Y});
+  if(x.kelBehind) flags.push({k:'kelvin', v:'serves '+x.kel+'; majority is '+D.curKel, color:Y});
+
+  const U = g.uptime || {};
+  const up3 = [['24h', U.day], ['7d', U.week], ['30d', U.month]].map(([k, u]) => { const c = upCell(u);
+    return '<div><div class="v" style="color:'+c.color+'">'+c.label+'</div><div class="k">'+k+' · '+(u ? u.up+'/'+u.all : '—')+'</div></div>'; }).join('');
+  const days = (det && det.days) || [];
+  const strip = days.map(dd => { const v = dd.all ? dd.up/dd.all : null; let bg, border = '1px solid transparent';
+    if(v == null){ bg = 'repeating-linear-gradient(45deg,transparent 0 3px,rgba(247,241,210,.1) 3px 4px)'; border = '1px solid rgba(247,241,210,.14)'; }
+    else if(v >= .95) bg = G; else if(v >= .5) bg = Y; else if(v > 0) bg = 'rgba(240,88,38,.65)'; else { bg = 'transparent'; border = '1px solid rgba(240,88,38,.55)'; }
+    return '<div title="'+day(dd.day)+' · '+dd.up+'/'+dd.all+' rounds" style="background:'+bg+';border:'+border+'"></div>'; }).join('');
+
+  const w = g.wait || {};
+  const live = [
+    {k:'status', v:st.label.toLowerCase()+' '+st.for, color:st.color},
+    {k:'since', v:g.since ? ts(g.since)+' UTC' : '— (no scored round yet)', color:C},
+    {k:'last heard', v:g.heard ? ts(g.heard)+' · '+dur(now-g.heard)+' ago' : 'never', color:g.heard ? C : R},
+  ];
+  if(w.ping) live.push({k:'ping pending', v:'unresponsive since '+ts(w.ping)+' · '+dur(now-w.ping), color:R});
+  // %w is a standing request for the next revision; only %z and %x are reads in flight
+  if(w.w) live.push({k:'%kids watch', v:'waiting for the next revision · open '+dur(now-w.w), color:DIM});
+  const inflight = ['z','x'].filter(k => w[k]).map(k => '%'+k+' '+dur(now-w[k]));
+  if(inflight.length) live.push({k:'in flight', v:inflight.join(' · '), color:DIM});
+  if(g.missing) live.push({k:'%kids empty', v:'last read came back empty '+ts(g.missing), color:Y});
+  const kv = rows => rows.map(r => '<span class="k">'+esc(r.k)+'</span><span class="v" style="color:'+r.color+'">'+esc(r.v)+'</span>').join('');
+
+  const log = det ? (det.kidsLog || []) : (g.kids ? [{at:null, kids:g.kids}] : []);
+  const ota = log.map((e, n) => { const k = e.kids || {}, isCur = k.hash === D.curHash.best, kOk = kel(k) === D.curKel;
+    // the oldest entry is our first read of the desk, so its arrival time is unknown
+    const baseline = !!det && n === log.length-1;
+    const seen = !e.at ? '—' : baseline ? ts(e.at)+' UTC <span style="color:rgba(247,241,210,.55)">· baseline, first read by us</span>'
+      : ts(e.at)+' UTC <span style="color:rgba(247,241,210,.55)">· lag '+(k.date ? dur(e.at-k.date) : '—')+'</span>';
+    const f = D.first[k.hash]; let net, netColor = C;
+    if(!f) net = '—';
+    else if(f.ship === ship || k.date <= f.date){ net = 'first on network with this hash'; netColor = G; }
+    else { net = '+'+dur(k.date-f.date)+' after '+f.ship; netColor = (k.date-f.date) > 2*DAY ? Y : C; }
+    const color = n === 0 ? (isCur && kOk ? G : Y) : 'rgba(247,241,210,.6)';
+    const tag = n === 0 ? (isCur && kOk ? 'CURRENT' : 'BEHIND') : 'SUPERSEDED';
+    return '<div class="ota"><div class="dot"><i style="border-color:'+color+';background:'+(n === 0 ? color : 'transparent')+'"></i></div><div style="flex:1;min-width:0">'+
+      '<div class="top"><span class="h" style="color:'+color+'">'+esc(k.hash || '—')+'</span><span class="kl" style="color:'+(kOk ? 'rgba(247,241,210,.7)' : Y)+'">'+esc(kelLabel(k))+'</span>'+
+      '<span class="tg" style="color:'+color+';border-color:'+color+'">'+tag+'</span></div>'+
+      '<div class="meta"><span class="k">committed</span><span>'+ts(k.date)+' UTC</span>'+
+      '<span class="k">seen by us</span><span>'+seen+'</span>'+
+      '<span class="k">vs network</span><span style="color:'+netColor+'">'+esc(net)+'</span></div></div></div>'; }).join('');
+
+  const c = g.chain;
+  const keys = c ? [
+    {k:'life', v:String(c.life)+(c.life === 0 ? '  · unkeyed' : ''), color:c.life === 0 ? R : C},
+    {k:'rift', v:String(c.rift)+(c.rift > 0 ? '  · breached '+c.rift+'×' : ''), color:c.rift > 0 ? R : C},
+    {k:'dominion', v:c.dominion+(c.dominion === 'jael' ? '  · no Azimuth point; only life/rift are real' : ''), color:c.dominion === 'jael' ? Y : C},
+    {k:'owner', v:c.dominion === 'jael' ? '—' : (c.owner || '—'), color:C},
+    {k:'management', v:c.dominion === 'jael' ? '—' : (c.management || '—'), color:'rgba(247,241,210,.75)'},
+  ] : [{k:'chain', v:'null — no on-chain record', color:R}];
+
+  const cl = (det && det.chainLog ? det.chainLog.slice() : []).sort((a, b) => a.at-b.at);
+  const chain = cl.map((e, n) => { const p = n ? cl[n-1].chain : null, q = e.chain; let what, color = C;
+    if(!p){ what = q ? 'first seen · life '+q.life+' · rift '+q.rift : 'first seen · no record'; color = 'rgba(247,241,210,.7)'; }
+    else { const parts = [];
+      if(p.life !== q.life) parts.push('life '+p.life+' → '+q.life);
+      if(p.rift !== q.rift){ parts.push('rift '+p.rift+' → '+q.rift); color = R; }
+      if(p.owner !== q.owner) parts.push('owner → '+shortAddr(q.owner));
+      if(p.management !== q.management) parts.push('management → '+shortAddr(q.management));
+      if(p.dominion !== q.dominion) parts.push('dominion '+p.dominion+' → '+q.dominion);
+      what = parts.join(' · ') || 'no field change'; if(color === C && q.life !== p.life) color = G; }
+    return '<div class="chg"><span class="t">'+ts(e.at)+'</span><span style="color:'+color+'">'+esc(what)+'</span></div>'; }).reverse().join('');
+
+  const evs = det && det.events ? det.events.slice(0, 50) : [];
+
+  $('detail').innerHTML =
+    '<div class="scrim" data-close></div><div class="drawer" role="dialog" aria-label="'+esc(ship)+'"><i class="tk t"></i><i class="tk b"></i><div class="dbody">'+
+    '<div class="dhead">'+sigBox(ship, 42, Y, 38)+
+      '<div style="flex:1;min-width:0"><div class="nm">'+esc(ship)+'</div><div class="cap" style="font-size:9.5px;letter-spacing:.18em;margin-top:4px">galaxy · #'+x.i+'</div></div>'+
+      '<span class="badge" style="font-size:10px;padding:3px 8px;color:'+st.color+';border-color:'+st.color+'">'+st.label+'</span>'+
+      '<button class="x" data-close aria-label="close">×</button></div>'+
+    (flags.length ? '<div class="flags">'+flags.map(f => '<div class="flag"><i style="background:'+f.color+'"></i><b style="color:'+f.color+'">'+esc(f.k)+'</b><span>'+esc(f.v)+'</span></div>').join('')+'</div>' : '')+
+    '<div class="cap sec" style="margin-top:22px">liveness</div><div class="up3">'+up3+'</div>'+
+    (days.length ? '<div class="strip">'+strip+'</div><div class="stripcap"><span>'+day(days[0].day)+'</span><span>daily rounds answered · UTC</span><span>'+day(days[days.length-1].day)+'</span></div>' : '')+
+    '<div class="kv" style="margin-top:14px">'+kv(live)+'</div>'+
+    '<div class="cap sec">events · observed here</div>'+
+    (!det ? '<div class="empty">reading galaxy/'+esc(ship)+'.json …</div>' : evs.length ? evs.map(e => evRow(e, D, false)).join('') : '<div class="empty">no changes observed for this galaxy.</div>')+
+    '<div class="cap sec">ota timeline · %kids revisions seen</div>'+
+    (!det ? '<div class="empty">reading galaxy/'+esc(ship)+'.json …</div>' : ota || '<div class="empty">%kids never read from this galaxy.</div>')+
+    '<div class="cap sec">on-chain keys</div><div class="kv">'+kv(keys)+'</div>'+
+    '<div class="cap" style="margin:20px 0 8px">on-chain changes observed</div>'+
+    (det ? (chain || '<div class="empty">no on-chain changes since the agent started.</div>') : '')+
+    '</div></div>';
+}
+
+// ---------- events wiring ----------
+document.addEventListener('click', e => {
+  const t = e.target;
+  if(t.closest('[data-close]')){ S.sel = null; render(); return; }
+  const f = t.closest('[data-filter]');
+  if(f){ const k = f.dataset.filter; S.filter = (S.filter === k && k !== 'all' && f.classList.contains('stat')) ? 'all' : k; render(); return; }
+  const so = t.closest('[data-sort]');
+  if(so){ const k = so.dataset.sort; S.sort = {k, d:S.sort.k === k ? -S.sort.d : 1}; render(); return; }
+  const sh = t.closest('[data-ship]');
+  if(sh && !t.closest('.drawer')){ openDetail(sh.dataset.ship); return; }
+});
+const KIND_COLOR = {current:G, behind:Y, down:R, unkeyed:R};
+$('grid').addEventListener('mouseover', e => {
+  const c = e.target.closest('.cell'); if(!c || c.contains(e.relatedTarget)) return;
+  const sg = c.querySelector('.sg');
+  if(sg && !sg.firstChild) sg.innerHTML = drawSigil(c.dataset.ship, 40, KIND_COLOR[c.dataset.kind] || C);
+  hoverSound(c.dataset.kind, +c.dataset.i);
+});
+// the header box and the ledger box share one query
+function setQuery(v){ S.q = v; $('q').value = v; $('hq').value = v; render(); }
+function matches(){ const D = derive(); if(!D) return [];
+  const q = S.q.trim().replace(/^~/,'').toLowerCase();
+  return D.info.filter(x => match(x, S.filter) && (!q || x.g.ship.indexOf(q) >= 0)); }
+['q','hq'].forEach(id => {
+  $(id).addEventListener('input', e => setQuery(e.target.value));
+  $(id).addEventListener('keydown', e => {
+    if(e.key === 'Escape' && S.q){ e.stopPropagation(); setQuery(''); }
+    if(e.key === 'Enter'){ const m = matches(); if(m.length) openDetail(m[0].g.ship); }
+  });
+});
+$('sound').addEventListener('click', () => { S.sound = !S.sound; save('sound', S.sound); if(S.sound){ audio(); setTimeout(popSound, 30); } renderHeader(derive()); });
+$('ev-more').addEventListener('click', olderEvents);
+window.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && S.sel){ S.sel = null; render(); }
+  // '/' jumps to search, unless already typing somewhere
+  if(e.key === '/' && !/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)){ e.preventDefault(); $('hq').focus(); }
+});
+const unlock = () => { if(S.sound) audio(); };
+window.addEventListener('pointerdown', unlock); window.addEventListener('keydown', unlock);
+
+load(); loadEvents();
+setInterval(() => { load(); loadEvents(); }, 60000);
+setInterval(() => { S.now = Date.now(); render(); }, 30000);
+</script>
+</body>
+</html>
