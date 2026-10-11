@@ -1,12 +1,17 @@
+::  /mar/accountability/action
+::
+::    The sample is .act, not =action: a face named action would shadow
+::    the mold, and +noun:grab must produce the mold.
+::
 /-  *accountability
-|_  =action
+|_  act=action
 ++  grab
   |%
   ++  noun  action
   --
 ++  grow
   |%
-  ++  noun  action
+  ++  noun  act
   --
 ++  grad  %noun
 --
