@@ -1,5 +1,9 @@
 # %accountability
 
+![](./img/hero.jpg)
+
+**Status ~2026.10.11:  `%accountability` is published from ~magbel.**
+
 `%accountability` watches all 256 Urbit galaxies from one observer ship and publishes what it sees. Every 10 minutes it checks each galaxy's keys on chain, whether it answers, and which `%kids` OTA it serves. It logs every change with a timestamp. A dashboard and a public JSON API serve the results.
 
 Galaxies sponsor the network and distribute its OTA updates. This project records which galaxies answer, which serve the same OTA as ~zod, and which do neither.
