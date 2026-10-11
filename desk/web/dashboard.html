@@ -538,7 +538,7 @@ function renderNet(D){
   const st = S, now = D.now, info = D.info;
   const counts = {up:info.filter(x => x.scored && x.g.up).length, down:info.filter(isDown).length,
     unkeyed:info.filter(x => x.unkeyed).length, behind:info.filter(x => x.behind).length};
-  $('net-tag').textContent = 'NET-01 / last round '+dur(Date.now()-(S.data.now || now))+' ago';
+  $('net-tag').textContent = 'NET-01 / '+(S.data.round ? 'last round '+dur(Date.now()-S.data.round)+' ago' : 'first round pending');
   const q = st.q.trim().replace(/^~/,'').toLowerCase();
   $('grid').innerHTML = info.map(x => {
     const g = x.g; let bg, fg, border;
