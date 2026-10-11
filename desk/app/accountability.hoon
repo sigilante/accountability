@@ -717,15 +717,13 @@
 ++  from
   |=  p=peer
   ^-  @da
-  =|  top=@da
+  =|  top=(unit @da)
   =/  ms  ~(val by days.p)
   |-  ^-  @da
-  ?~  ms
-    ?.  =(0 top)  top
-    (sub (day now.bowl) (mul 29 ~d1))
+  ?~  ms  (fall top (sub (day now.bowl) (mul 29 ~d1)))
   =.  top
     %+  roll  ~(tap in ~(key by i.ms))
-    |:([d=*@da a=top] (max d a))
+    |:([d=*@da a=top] `(max d (fall a d)))
   $(ms t.ms)
 ::
 ++  watch

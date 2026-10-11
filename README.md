@@ -67,23 +67,53 @@ The dashboard is at `/apps/accountability` on the ship's web port. Galaxies stay
 
 ## Peers
 
-Observers can exchange their measurements. Each ship keeps a whitelist of peer observers. The relation is bilateral: a ship subscribes to each peer's reports and serves its own only to ships on its list, so two ships exchange reports once both have added each other.
+Observers can exchange their measurements. Each ship keeps a whitelist of peer observers. The relation is bilateral: a ship subscribes to each peer's reports and serves its own only to ships on its list. Two ships exchange reports once both have added each other.
+
+### Adding a peer
+
+Run the same poke on both ships, each naming the other. A comet needs its full `@p`.
 
 ```
-:accountability &accountability-action [%peer ~sampel-palnet &]   :: add; | removes
+:: on ~sampel-palnet
+:accountability &accountability-action [%peer ~magbel &]
+:: on ~magbel
+:accountability &accountability-action [%peer ~sampel-palnet &]
 ```
 
-- **What a report holds.** The peer's daily tallies for each galaxy, each scored galaxy's up or down state as of the peer's last round, and that round's time. A new subscription starts 29 days back, which with today makes 30. After that the peer sends today's tallies after every round.
-- **Who it reaches.** Only the ship that subscribed. Nothing is relayed, so a report always comes straight from the ship that measured it, and Ames authenticates that ship.
-- **What it changes.** Nothing in our own scores. The dashboard shows peers in a ledger column ("2/3" peers see the galaxy up), a **disputed** filter for galaxies where most fresh peers disagree with us, and a table in the detail drawer. A peer is fresh if its last round came within three of our intervals.
+The first ship to add the other is refused until the second does. Each ship retries once a round, so reports flow within one interval of the second poke. A ship cannot add itself.
+
+### Removing a peer
+
+```
+:accountability &accountability-action [%peer ~sampel-palnet |]
+```
+
+This drops the peer's reports, ends our subscription to it, and kicks its subscription to ours. The peer's next retry is refused. To exchange reports again, add it back; it starts over with 30 days of history.
+
+### Asking for older tallies
+
+```
+:accountability &accountability-action [%fill ~sampel-palnet ~2026.9.1]
+```
+
+This replaces our subscription to the peer with one that starts on that UTC day, and the peer sends its tallies from then on. A new subscription starts 29 days back, which with today makes 30; after a dropped subscription, it starts from the newest day the peer has reported.
+
+### Checking a peer
+
+- `galaxies.json` lists each peer under `peers`. `heard` is when its last report came; `refused` is when it last refused our subscription, usually because it has not added us yet, and is null once it accepts.
+- `:accountability +dbug [%outgoing ~]` shows our subscriptions to peers; `ackd=%.y` means the peer accepted. `:accountability +dbug [%incoming ~]` shows peers subscribed to us.
+- A peer's galaxies read `up: null` until it has scored a round, one interval after it starts.
+
+### What a report holds and changes
+
+- **Contents.** The peer's daily tallies for each galaxy, each scored galaxy's up or down state as of the peer's last round, and that round's time. After the first report, the peer sends today's tallies after every round.
+- **Reach.** Only the ship that subscribed. Nothing is relayed, so a report always comes straight from the ship that measured it, and Ames authenticates that ship.
+- **Effect.** Nothing in our own scores. The dashboard shows peers in a ledger column ("2/3" peers see the galaxy up), a **disputed** filter for galaxies where most fresh peers disagree with us, and a table in the detail drawer. A peer is fresh if its last round came within three of our intervals.
 - **Untrusted input.** A malformed report is dropped whole; an entry with a non-galaxy ship, more answered rounds than rounds, or a future day is dropped alone.
-- **Retries.** Each round, the agent resubscribes to any peer whose subscription was refused or dropped. `refused` in `galaxies.json` shows when a peer last refused, usually because it has not added us yet.
-- **Removing a peer** drops its reports, leaves its subscription, and kicks its subscription to ours.
-- **Backfill.** `[%fill ~sampel-palnet ~2026.9.1]` resubscribes for tallies from that day on.
 
 ## Pokes and scries
 
-Pokes come from the observer ship only.
+Pokes come from the observer ship only. See [Peers](#peers) for `%peer` and `%fill`.
 
 ```
 :accountability &accountability-action [%interval ~m5]   :: time between rounds; default ~m10
